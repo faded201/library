@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head><title>Xavier OS ∞ Quinn</title></head>
-<body>
-<h1>🚀 Xavier OS Live!</h1>
-<a href="/streamlit">📱 Streamlit Quinn App → Click Here</a><br>
-<a href="/docs">🔧 API Docs (Quinn generator)</a><br>
-<p>Quinn Talen ∞ audiobook loading...</p>
-<script>window.location.href="/streamlit";</script>
-</body>
-</html>
+<button onclick="generate()">Generate Chapter</button>
+
+<script>
+async function generate() {
+  const res = await fetch("/api/generate");
+  const data = await res.json();
+  document.getElementById("story").innerText = data.chapter;
+}
+</script>
