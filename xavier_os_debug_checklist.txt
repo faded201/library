@@ -1,0 +1,12 @@
+Debug and sanity checklist
+
+- Verify each API endpoint returns expected schema.
+- Verify chapter generation length target of about 23 minutes.
+- Verify TTS renders without robotic artifacts.
+- Verify every unlock/perk transaction is idempotent.
+- Verify audio playback resumes correctly.
+- Verify offline sync does not duplicate progress.
+- Verify moderation rejects unsafe outputs.
+- Verify no copyrighted title is copied verbatim or extended unlawfully.
+- Verify analytics events are emitted once per action.
+- Verify error states show usable recovery paths.

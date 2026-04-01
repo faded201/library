@@ -1,0 +1,26 @@
+Architecture
+
+1. Client apps
+- Mobile app for listening, reading, downloads, progression, and alerts.
+- Web admin console for story editors and moderation.
+
+2. API layer
+- Auth service.
+- Library/catalog service.
+- User progression service.
+- Chapter generation orchestration service.
+- Audio streaming service.
+- Recommendation service.
+
+3. AI pipeline
+- Plot planner creates chapter outline.
+- Lore retrieval fetches canon facts.
+- Safety filter checks generated text.
+- TTS service renders audio.
+- QA pass checks continuity and length.
+
+4. Data model
+- Users, series, chapters, characters, abilities, perks, inventory, unlocks, listening sessions.
+
+5. Observability
+- Logs, traces, generation metrics, audio latency, failed synthesis, content rejection rates.

@@ -1,0 +1,11 @@
+flowchart LR
+U[User App] --> API[FastAPI API]
+API --> DB[(PostgreSQL/SQLite)]
+API --> LLM[Chapter Generator]
+API --> IMG[Image Generator]
+API --> TTS[TTS Engine]
+API --> MOD[Moderation]
+IMG --> CDN[Media Storage/CDN]
+TTS --> CDN
+DB --> REC[Recommendations]
+API --> REC

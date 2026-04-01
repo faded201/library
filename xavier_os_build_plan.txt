@@ -1,0 +1,19 @@
+Build plan
+
+Phase 1
+- Define product rules, content policy, and series bible.
+- Design wireframes and navigation.
+- Create a minimal listening flow.
+
+Phase 2
+- Build auth, catalog, chapter playback, and progression.
+- Add AI chapter generation and TTS.
+- Store chapter audio and metadata.
+
+Phase 3
+- Add perk fusion, recommendations, offline sync, and admin controls.
+- Add moderation dashboards and analytics.
+
+Phase 4
+- Load test, fuzz test, regression test, and deployment hardening.
+- Ship beta and iterate from feedback.
