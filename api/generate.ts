@@ -1,8 +1,5 @@
-export default async function handler(req, res) {
-  const chapter = `
-  The shadows moved before he did.
-  Something inside him had awakened...
-  `;
-
-  res.status(200).json({ chapter });
+export default function handler(req, res) {
+  res.status(200).json({
+    chapter: "The system awakens… power flows through your veins."
+  });
 }
