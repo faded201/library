@@ -59,3 +59,51 @@ Quinn: alloy (deep/mysterious) | Dalki: onyx (brutal) | Prophecy: echo (cosmic)
 ---
 
 **Quinn Talen's destiny awaits. Hit play. Never stop.** ∞
+
+
+
+# XAVIER OS LICENSE AGREEMENT
+## Personal Use License for Never-Ending Audiobook Platform
+
+**Copyright © 2026 faded201 (https://github.com/faded201)**
+
+## PERMITTED USE (Personal Only)
+- Personal, non-commercial use on your own devices
+- Private enjoyment of infinite audiobook generation  
+- Testing, learning, personal modification
+- Single-user deployment for yourself/family
+
+## STRICTLY PROHIBITED
+❌ **Mass production/distribution** of any kind
+❌ Commercial resale or monetization  
+❌ SaaS/hosted services for others
+❌ App store distribution (iOS/Android)
+❌ Selling access/subscriptions
+❌ Redistribution of generated content commercially
+❌ Enterprise/multi-user deployments
+
+## AI-GENERATED CONTENT
+- Stories/images/audio created belong to YOU for personal use
+- Do not publish/sell AI-generated chapters commercially
+- Personal backups/sharing with friends OK (non-commercial)
+
+## MODIFICATION
+- Modify source code for personal use OK
+- Cannot relicense or claim ownership of core codebase
+
+## NO WARRANTY
+Software provided "AS IS". No guarantees of uptime/quality.
+
+## TERMINATION
+License revoked if used commercially or redistributed for profit.
+
+---
+
+**This license PROTECTS you from copyright claims on personal use while preventing mass commercialization.**
+
+By using, you agree to these personal-only terms.
+
+faded201 - March 2026
+
+
+
