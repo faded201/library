@@ -6,7 +6,6 @@
 
 <title>🌌 Xavier-OS Awakening</title>
 
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#000000">
 
 <style>
@@ -21,14 +20,13 @@ body{
   overflow-x:hidden;
 }
 
-/* 📜 SCRIPTURE */
+/* 📜 SCRIPTURE BACKGROUND */
 body::before{
   content:"";
   position:fixed;
   inset:0;
   background:url("https://i.imgur.com/8IuucQZ.png");
   opacity:.05;
-  animation:moveScript 120s linear infinite;
 }
 
 /* 🕯️ LIGHT FOLLOW */
@@ -49,6 +47,13 @@ body::before{
   margin:10px;
   color:#ffd27a;
   text-shadow:0 0 10px orange;
+}
+
+/* 📖 BOOK GRID */
+#rows{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
 }
 
 /* 📖 BOOK */
@@ -100,8 +105,8 @@ body::before{
 
 .particle{
   position:absolute;
-  width:5px;
-  height:5px;
+  width:4px;
+  height:4px;
   background:orange;
   border-radius:50%;
   animation:rise 3s linear;
@@ -124,10 +129,32 @@ body::before{
   100%{transform:translateY(-10vh)}
 }
 
-h1{text-align:center;margin:20px}
-#rows{display:flex;flex-wrap:wrap;justify-content:center}
+/* 📖 READER */
+#reader{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.96);
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:999;
+}
 
-button{padding:10px;margin:5px}
+#readerContent{
+  max-width:600px;
+  padding:20px;
+  line-height:1.7;
+  color:#ffd27a;
+  text-shadow:0 0 10px orange;
+}
+
+button{
+  padding:10px;
+  margin:5px;
+}
+
+h1{text-align:center;margin:20px}
 
 </style>
 </head>
@@ -149,6 +176,17 @@ button{padding:10px;margin:5px}
 <div class="rune" style="left:20%">𓂀</div>
 <div class="rune" style="left:60%">✶</div>
 
+<!-- 📖 READER -->
+<div id="reader">
+  <div id="readerContent"></div>
+  <div>
+    <button onclick="prevPage()">⬅️</button>
+    <button onclick="nextPage()">➡️</button>
+    <button onclick="closeReader()">❌</button>
+  </div>
+</div>
+
+<!-- 🔊 AUDIO -->
 <audio id="ambient" loop>
   <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b0d9f.mp3">
 </audio>
@@ -160,19 +198,19 @@ button{padding:10px;margin:5px}
 <script>
 
 /* 🔊 AUDIO */
-const ambient = document.getElementById("ambient");
-const whisper = document.getElementById("whisper");
-
+const ambient=document.getElementById("ambient");
+const whisper=document.getElementById("whisper");
 document.body.addEventListener("click",()=>ambient.play());
 
 /* 💡 LIGHT */
-const glow=document.querySelector(".scripture-glow");
 document.addEventListener("mousemove",e=>{
-  glow.style.setProperty("--x",e.clientX+"px");
-  glow.style.setProperty("--y",e.clientY+"px");
+  document.querySelector(".scripture-glow")
+  .style.setProperty("--x",e.clientX+"px");
+  document.querySelector(".scripture-glow")
+  .style.setProperty("--y",e.clientY+"px");
 });
 
-/* 📚 YOUR BOOKS */
+/* 📚 CORE BOOKS */
 const coreBooks=[
 "Vampire System","Gods Eye","My Dragonic System",
 "Dragon Inside of Me","Shadow Blade",
@@ -180,20 +218,84 @@ const coreBooks=[
 ];
 
 /* 🔥 GENERATOR */
-const words=["Forbidden","Savage","Cursed","Immortal","Awakened"];
-const hooks=["System","King","Gate","Empire"];
-const ends=["of Shadows","of Blood","of Chaos","of Night"];
+const w=["Forbidden","Savage","Cursed","Immortal","Awakened"];
+const h=["System","King","Gate","Empire"];
+const e=["of Shadows","of Blood","of Chaos","of Night"];
 
-function gen(){
-  return `${words[Math.random()*words.length|0]} ${hooks[Math.random()*hooks.length|0]} ${ends[Math.random()*ends.length|0]}`;
-}
+const gen=()=>`${w[Math.random()*w.length|0]} ${h[Math.random()*h.length|0]} ${e[Math.random()*e.length|0]}`;
 
 /* 🎮 PLAYER */
 let player={level:1,xp:0};
 let currentBook=null;
 
+/* 💾 SAVE */
+function save(){localStorage.setItem("xos",JSON.stringify(player))}
+function load(){
+  const d=localStorage.getItem("xos");
+  if(d) player=JSON.parse(d);
+}
+
+/* 📖 STORY */
+const stories={};
+
+function story(title){
+  if(stories[title]) return stories[title];
+
+  let pages=[];
+  for(let i=1;i<=10;i++){
+    pages.push(`
+      <h3>${title} — Chapter ${i}</h3>
+      <p>
+      The system awakened.
+      Power surged.
+      ${title} has begun.
+      Every step forward reshapes destiny.
+      </p>
+    `);
+  }
+
+  stories[title]=pages;
+  return pages;
+}
+
+/* 📖 READER */
+let page=0,pages=[];
+
+function openReader(t){
+  currentBook=t;
+  pages=story(t);
+  page=parseInt(localStorage.getItem("p_"+t))||0;
+  reader.style.display="flex";
+  renderPage();
+}
+
+function renderPage(){
+  readerContent.innerHTML=pages[page];
+}
+
+function nextPage(){
+  if(page<pages.length-1){
+    page++;
+    localStorage.setItem("p_"+currentBook,page);
+    addXP();
+    renderPage();
+  }
+}
+
+function prevPage(){
+  if(page>0){
+    page--;
+    localStorage.setItem("p_"+currentBook,page);
+    renderPage();
+  }
+}
+
+function closeReader(){
+  reader.style.display="none";
+}
+
 /* ✨ PARTICLES */
-function spawnParticles(el){
+function particles(el){
   const c=el.querySelector(".particles");
   setInterval(()=>{
     const p=document.createElement("div");
@@ -206,7 +308,6 @@ function spawnParticles(el){
 
 /* 📖 BOOK */
 function createBook(name){
-
   const b=document.createElement("div");
   b.className="book";
 
@@ -215,44 +316,40 @@ function createBook(name){
   }
 
   b.innerHTML=`
-    <div class="book-inner">
-      <div class="page">${name}</div>
-      <div class="page back">📖</div>
-    </div>
-    <div class="particles"></div>
-  `;
+  <div class="book-inner">
+    <div class="page">${name}</div>
+    <div class="page back">📖</div>
+  </div>
+  <div class="particles"></div>`;
 
   b.onclick=()=>{
     b.classList.toggle("open");
     whisper.play();
-    currentBook=name;
+    openReader(name);
   };
 
-  spawnParticles(b);
+  particles(b);
   return b;
 }
 
 /* ⚡ XP */
 function addXP(){
-  if(!currentBook) return;
-
-  player.xp+=10;
+  player.xp+=15;
 
   if(player.xp>=player.level*100){
     player.xp=0;
     player.level++;
-    spawnBook();
+    spawn();
   }
 
+  save();
   render();
 }
 
-function manualXP(){
-  addXP();
-}
+function manualXP(){addXP();}
 
 /* 📚 SPAWN */
-function spawnBook(){
+function spawn(){
   const name=Math.random()<0.3
     ? coreBooks[Math.random()*coreBooks.length|0]
     : gen();
@@ -266,6 +363,7 @@ function spawnBook(){
 
 /* 🚀 INIT */
 function init(){
+  load();
 
   coreBooks.forEach(n=>rows.appendChild(createBook(n)));
 
@@ -278,22 +376,18 @@ function init(){
 
 /* 📊 UI */
 function render(){
-  stats.innerHTML=`
-  🔥 Level: ${player.level} |
-  ⚡ XP: ${player.xp} |
-  📖 ${currentBook || "Choose a book"}
-  `;
+  stats.innerHTML=
+  `🔥 Level ${player.level} | ⚡ XP ${player.xp} | 📖 ${currentBook||"Choose"}`;
 }
 
-/* 🔄 AUTO LOOP */
+/* 🔄 LOOP */
 setInterval(()=>{
   if(currentBook){
     addXP();
-    if(Math.random()<0.3) spawnBook();
+    if(Math.random()<0.25) spawn();
   }
 },3000);
 
-/* START */
 init();
 
 </script>
