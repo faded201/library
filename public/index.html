@@ -1,46 +1,133 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cinematic Audiobooks</title>
 
-/* 🎧 AUDIO SYSTEM */
-const bgMusic = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_7c1b9c3c6e.mp3");
-bgMusic.loop = true;
-bgMusic.volume = 0.3;
+<style>
 
-const sfx = {
-  boom: new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_49c6d0a3c7.mp3"),
-  magic: new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_6e8b4c4a0e.mp3")
-};
+/* 🌌 BACKGROUND */
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: white;
+  overflow-x: hidden;
 
-/* 🎤 VOICE */
-function getVoice(type) {
-  const voices = speechSynthesis.getVoices();
-  if (!voices.length) return null;
+  background: radial-gradient(circle at 20% 30%, #1a1f4b, transparent),
+              radial-gradient(circle at 80% 70%, #4b1a3a, transparent),
+              radial-gradient(circle at center, #050510, #000000);
 
-  return type === "female"
-    ? voices.find(v => v.name.toLowerCase().includes("female")) || voices[1]
-    : voices.find(v => v.name.toLowerCase().includes("male")) || voices[0];
+  background-size: 200% 200%;
+  animation: backgroundShift 15s ease infinite;
 }
 
-/* 🧠 AI STORY GENERATOR (LOCAL SIMULATION) */
-function generateScene(bookTitle) {
+@keyframes backgroundShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
-  const events = [
-    "A shadow moved in the distance.",
-    "Power surged through his body.",
-    "A mysterious voice whispered.",
-    "The ground shattered beneath him.",
-    "A new enemy appeared.",
-    "Time itself slowed down."
-  ];
+/* ✨ MAGIC OVERLAY */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
+  animation: rotateMagic 40s linear infinite;
+  z-index: 0;
+}
 
-  const chars = ["narrator","hero","system","enemy"];
-  const voices = ["male","female"];
+@keyframes rotateMagic {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 
-  return {
-    char: chars[Math.floor(Math.random()*chars.length)],
-    voice: voices[Math.floor(Math.random()*voices.length)],
-    text: `${bookTitle}: ${events[Math.floor(Math.random()*events.length)]}`,
-    img: `https://picsum.photos/800/400?random=${Math.random()*1000}`
-  };
+/* 🔥 CANVAS */
+#fireflies {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* 🎬 TITLE */
+h1 {
+  text-align: center;
+  text-shadow: 0 0 20px white;
+  z-index: 2;
+  position: relative;
+}
+
+/* 🎥 SCENE */
+#sceneImage {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* 💬 SUBTITLES */
+#subtitles {
+  position: fixed;
+  bottom: 100px;
+  width: 100%;
+  text-align: center;
+  background: rgba(0,0,0,0.6);
+  padding: 10px;
+  z-index: 3;
+}
+
+/* 📚 BOOKS */
+#rows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.card {
+  margin: 15px;
+  padding: 20px;
+  width: 80%;
+  max-width: 400px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+</style>
+</head>
+
+<body>
+
+<canvas id="fireflies"></canvas>
+
+<h1>🎧 Cinematic Audiobooks</h1>
+
+<img id="sceneImage">
+<div id="subtitles"></div>
+<div id="rows"></div>
+
+<script>
+
+/* 🎧 MUSIC */
+const music = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_7c1b9c3c6e.mp3");
+music.loop = true;
+music.volume = 0.3;
+
+/* 🎤 VOICE */
+function getVoice() {
+  return speechSynthesis.getVoices()[0];
 }
 
 /* 📚 BOOKS */
@@ -54,16 +141,14 @@ const books = {
   vikings: { title: "Vikings: Valhalla Into the After" }
 };
 
-/* 🎴 UI */
+/* 🎴 BUILD UI */
 const rows = document.getElementById("rows");
 
 Object.keys(books).forEach(key=>{
   const card = document.createElement("div");
   card.className="card";
   card.innerText = books[key].title;
-
-  card.onclick = ()=>startCinematic(key);
-
+  card.onclick = ()=>playBook(books[key].title);
   rows.appendChild(card);
 });
 
@@ -71,40 +156,21 @@ Object.keys(books).forEach(key=>{
 const img = document.getElementById("sceneImage");
 const sub = document.getElementById("subtitles");
 
-function startCinematic(key){
+function playBook(title){
 
-  speechSynthesis.cancel();
-  bgMusic.play();
-
-  let count = 0;
+  music.play();
 
   function next(){
 
-    if(count > 20) return; // length of session
+    const text = title + ": A powerful moment unfolds...";
+    img.src = "https://picsum.photos/800/400?random=" + Math.random();
 
-    let scene = generateScene(books[key].title);
+    sub.innerText = text;
 
-    img.src = scene.img;
-    sub.innerText = scene.char.toUpperCase() + ": " + scene.text;
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = getVoice();
 
-    /* 🎧 RANDOM SOUND FX */
-    if(Math.random() > 0.7){
-      sfx.magic.currentTime = 0;
-      sfx.magic.play();
-    }
-
-    if(Math.random() > 0.85){
-      sfx.boom.currentTime = 0;
-      sfx.boom.play();
-    }
-
-    let u = new SpeechSynthesisUtterance(scene.text);
-    u.voice = getVoice(scene.voice);
-
-    u.onend = ()=>{
-      count++;
-      setTimeout(next, 700);
-    };
+    u.onend = ()=>setTimeout(next, 800);
 
     speechSynthesis.speak(u);
   }
@@ -112,4 +178,53 @@ function startCinematic(key){
   next();
 }
 
+/* ✨ FIREFLIES */
+const canvas = document.getElementById("fireflies");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+
+for (let i = 0; i < 80; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 2 + 1,
+    dx: (Math.random() - 0.5) * 0.6,
+    dy: (Math.random() - 0.5) * 0.6,
+    glow: Math.random()
+  });
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach(p => {
+
+    const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*6);
+    g.addColorStop(0, `rgba(255,255,200,${p.glow})`);
+    g.addColorStop(1, "transparent");
+
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r*6,0,Math.PI*2);
+    ctx.fill();
+
+    p.x += p.dx;
+    p.y += p.dy;
+
+    if(p.x<0||p.x>canvas.width) p.dx*=-1;
+    if(p.y<0||p.y>canvas.height) p.dy*=-1;
+  });
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
 </script>
+
+</body>
+</html>
