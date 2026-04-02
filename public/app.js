@@ -1,22 +1,29 @@
-// ==========================/* 📲 ENABLE APP MODE */
+/* =========================
+   📲 APP MODE (PWA)
+========================= */
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
 }
 
-/* 🔊 SOUND */
+/* =========================
+   🔊 SOUND
+========================= */
 const ambient = document.getElementById("ambient");
 const whisper = document.getElementById("whisper");
 
-document.body.addEventListener("click",()=>{
-  ambient.play();
+document.body.addEventListener("click", () => {
+  if (ambient) ambient.play().catch(()=>{});
 });
 
-/* 💡 LIGHT */
-const glow=document.querySelector(".scripture-glow");
+/* =========================
+   💡 LIGHT FOLLOW
+========================= */
+const glow = document.querySelector(".scripture-glow");
 
-document.addEventListener("mousemove",e=>{
-  glow.style.setProperty("--x",e.clientX+"px");
-  glow.style.setProperty("--y",e.clientY+"px");
+document.addEventListener("mousemove", e => {
+  if (!glow) return;
+  glow.style.setProperty("--x", e.clientX + "px");
+  glow.style.setProperty("--y", e.clientY + "px");
 });
 
 /* =========================
@@ -33,7 +40,7 @@ const coreBooks = [
 ];
 
 /* =========================
-   🔥 TRENDING GENERATOR
+   🔥 GENERATOR
 ========================= */
 const words = ["Forbidden","Broken","Savage","Cursed","Immortal","Awakened"];
 const hooks = ["System","King","Queen","Gate","Empire"];
@@ -54,7 +61,95 @@ let player = {
 
 let currentBook = null;
 
-/* 🔥 BOOK BOOSTS */
+/* =========================
+   💾 SAVE SYSTEM
+========================= */
+function save(){
+  localStorage.setItem("xavierOS_player", JSON.stringify(player));
+}
+
+function load(){
+  const data = localStorage.getItem("xavierOS_player");
+  if(data) player = JSON.parse(data);
+}
+
+/* =========================
+   📖 STORY SYSTEM
+========================= */
+const stories = {};
+
+function generateStory(title){
+
+  if(stories[title]) return stories[title];
+
+  const pages = [];
+
+  for(let i=1;i<=10;i++){
+    pages.push(`
+      <h3>${title} — Chapter ${i}</h3>
+      <p>
+      The system awakens.
+      Power surges through the chosen.
+      ${title} begins its rise.
+      Every decision reshapes fate.
+      </p>
+    `);
+  }
+
+  stories[title] = pages;
+  return pages;
+}
+
+/* =========================
+   📖 READER SYSTEM
+========================= */
+let currentPage = 0;
+let currentPages = [];
+
+function openReader(title){
+
+  currentBook = title;
+  currentPages = generateStory(title);
+
+  currentPage = parseInt(localStorage.getItem("page_"+title)) || 0;
+
+  document.getElementById("reader").style.display = "flex";
+
+  renderPage();
+}
+
+function renderPage(){
+  document.getElementById("readerContent").innerHTML =
+    currentPages[currentPage];
+}
+
+function nextPage(){
+  if(currentPage < currentPages.length - 1){
+    currentPage++;
+
+    localStorage.setItem("page_"+currentBook, currentPage);
+
+    addXP();
+    renderPage();
+    save();
+  }
+}
+
+function prevPage(){
+  if(currentPage > 0){
+    currentPage--;
+    localStorage.setItem("page_"+currentBook, currentPage);
+    renderPage();
+  }
+}
+
+function closeReader(){
+  document.getElementById("reader").style.display = "none";
+}
+
+/* =========================
+   🔥 BOOK BOOSTS
+========================= */
 function getBoost(name){
   if(name === "Vampire System") return 1.5;
   if(name === "Gods Eye") return 2;
@@ -67,12 +162,15 @@ function getBoost(name){
    ✨ PARTICLES
 ========================= */
 function spawnParticles(el){
-  const c=el.querySelector(".particles");
+  const c = el.querySelector(".particles");
+
   setInterval(()=>{
-    const p=document.createElement("div");
-    p.className="particle";
-    p.style.left=Math.random()*100+"%";
+    const p = document.createElement("div");
+    p.className = "particle";
+    p.style.left = Math.random()*100 + "%";
+
     c.appendChild(p);
+
     setTimeout(()=>p.remove(),3000);
   },200);
 }
@@ -82,15 +180,14 @@ function spawnParticles(el){
 ========================= */
 function createBook(name){
 
-  const b=document.createElement("div");
-  b.className="book";
+  const b = document.createElement("div");
+  b.className = "book";
 
-  /* 👑 highlight your books */
   if(coreBooks.includes(name)){
-    b.style.boxShadow="0 0 30px red, 0 0 60px gold";
+    b.style.boxShadow = "0 0 30px red, 0 0 60px gold";
   }
 
-  b.innerHTML=`
+  b.innerHTML = `
     <div class="book-inner">
       <div class="page">${name}</div>
       <div class="page back">📖</div>
@@ -98,11 +195,12 @@ function createBook(name){
     <div class="particles"></div>
   `;
 
-  b.onclick=()=>{
+  b.onclick = () => {
     b.classList.toggle("open");
-    whisper.play();
 
-    currentBook = name;
+    if (whisper) whisper.play().catch(()=>{});
+
+    openReader(name);
   };
 
   spawnParticles(b);
@@ -124,10 +222,10 @@ function addXP(){
     player.xp = 0;
     player.level++;
 
-    // reward = spawn new book
     spawnNewBook();
   }
 
+  save();
   renderStats();
 }
 
@@ -147,23 +245,22 @@ function spawnNewBook(){
   const book = createBook(name);
   document.getElementById("rows").appendChild(book);
 
-  // cleanup
   if(rows.children.length > 150){
     rows.removeChild(rows.firstChild);
   }
 }
 
 /* =========================
-   🚀 INIT 137 BOOKS
+   🚀 INIT LIBRARY
 ========================= */
 function initLibrary(){
 
-  // your core first
+  const rows = document.getElementById("rows");
+
   coreBooks.forEach(name=>{
     rows.appendChild(createBook(name));
   });
 
-  // fill to 137
   for(let i=coreBooks.length;i<137;i++){
     rows.appendChild(createBook(generateBookName()));
   }
@@ -186,6 +283,7 @@ setInterval(()=>{
    📊 UI
 ========================= */
 function renderStats(){
+
   let el = document.getElementById("stats");
 
   if(!el){
@@ -203,7 +301,8 @@ function renderStats(){
 }
 
 /* =========================
-   START
+   🚀 START
 ========================= */
+load();
 initLibrary();
 renderStats();
