@@ -69,7 +69,7 @@ function load(){
 }
 
 /* =========================
-   🌐 AI KEYS (USER INPUT)
+   🌐 AI KEYS
 ========================= */
 const AI_KEYS = {
   GEMINI: "",
@@ -117,7 +117,6 @@ async function tryAI(fn, title){
    🟢 GEMINI
 ========================= */
 async function geminiAI(title){
-
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${AI_KEYS.GEMINI}`,
     {
@@ -126,7 +125,7 @@ async function geminiAI(title){
       body:JSON.stringify({
         contents:[{
           parts:[{
-            text:`Write a cinematic, immersive dark fantasy story titled "${title}". Deep world-building, emotional, powerful.`
+            text:`Write a cinematic dark fantasy story titled "${title}".`
           }]
         }]
       })
@@ -141,7 +140,6 @@ async function geminiAI(title){
    🟣 GROQ
 ========================= */
 async function groqAI(title){
-
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions",{
     method:"POST",
     headers:{
@@ -162,10 +160,9 @@ async function groqAI(title){
 }
 
 /* =========================
-   🔵 OPENROUTER (MISTRAL)
+   🔵 OPENROUTER
 ========================= */
 async function openRouterAI(title){
-
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions",{
     method:"POST",
     headers:{
@@ -176,7 +173,7 @@ async function openRouterAI(title){
       model:"mistralai/mistral-7b-instruct",
       messages:[{
         role:"user",
-        content:`Write an epic fantasy story titled "${title}" with strong immersion.`
+        content:`Epic fantasy story titled "${title}".`
       }]
     })
   });
@@ -189,7 +186,6 @@ async function openRouterAI(title){
    🟡 HUGGING FACE
 ========================= */
 async function huggingFaceAI(title){
-
   const res = await fetch(
     "https://api-inference.huggingface.co/models/gpt2",
     {
@@ -220,7 +216,7 @@ function fallbackStory(title){
 }
 
 /* =========================
-   🔊 AUDIOBOOK
+   🔊 AUDIO
 ========================= */
 function speak(text){
   if(!('speechSynthesis' in window)) return;
@@ -242,14 +238,12 @@ let currentPage = 0;
 let currentPages = [];
 
 async function openReader(title){
-
   currentBook = title;
   currentPages = await generateStory(title);
 
   currentPage = +localStorage.getItem("page_"+title) || 0;
 
   document.getElementById("reader").style.display = "flex";
-
   renderPage();
 }
 
@@ -263,7 +257,8 @@ function nextPage(){
   if(currentPage < currentPages.length - 1){
     currentPage++;
     localStorage.setItem("page_"+currentBook, currentPage);
-    addXP();
+    player.xp += 5;
+    renderStats();
     renderPage();
   }
 }
@@ -280,6 +275,13 @@ function closeReader(){
 }
 
 /* =========================
+   🎨 IMAGE GEN (LAZY LOAD)
+========================= */
+function getBookImage(title){
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(title + " dark fantasy cinematic character")}`;
+}
+
+/* =========================
    💎 RARITY
 ========================= */
 function getRarity(){
@@ -292,30 +294,7 @@ function getRarity(){
 }
 
 /* =========================
-   ✨ PARTICLES
-========================= */
-function spawnParticles(el){
-
-  const c = el.querySelector(".particles");
-  if(!c) return;
-
-  const interval = setInterval(()=>{
-    if(!el.classList.contains("active")){
-      clearInterval(interval);
-      return;
-    }
-
-    const p = document.createElement("div");
-    p.className="particle";
-    p.style.left=Math.random()*100+"%";
-    c.appendChild(p);
-
-    setTimeout(()=>p.remove(),3000);
-  },150);
-}
-
-/* =========================
-   📖 CREATE BOOK
+   📚 CREATE BOOK (DEAD)
 ========================= */
 function createBook(name){
 
@@ -336,18 +315,22 @@ function createBook(name){
 }
 
 /* =========================
-   ⚡ ACTIVATE
+   ⚡ ACTIVATE BOOK
 ========================= */
 function activateBook(b){
 
   if(b.classList.contains("active")) return;
 
   const name = b.dataset.name;
+  const img = getBookImage(name);
 
   b.classList.remove("dead");
   b.classList.add("active");
 
   b.innerHTML = `
+    <div class="book-cover">
+      <img src="${img}" loading="lazy"/>
+    </div>
     <div class="book-inner">
       <div class="page">${name}</div>
       <div class="page back">📖</div>
@@ -356,7 +339,6 @@ function activateBook(b){
   `;
 
   spawnParticles(b);
-
   whisper?.play().catch(()=>{});
 
   setTimeout(()=>{
@@ -366,17 +348,37 @@ function activateBook(b){
 }
 
 /* =========================
+   ✨ PARTICLES
+========================= */
+function spawnParticles(el){
+  const c = el.querySelector(".particles");
+
+  const interval = setInterval(()=>{
+    if(!el.classList.contains("active")){
+      clearInterval(interval);
+      return;
+    }
+
+    const p = document.createElement("div");
+    p.className="particle";
+    p.style.left=Math.random()*100+"%";
+    c.appendChild(p);
+
+    setTimeout(()=>p.remove(),3000);
+  },150);
+}
+
+/* =========================
    📚 LIBRARY
 ========================= */
 function initLibrary(){
-
   const rows = document.getElementById("rows");
 
   coreBooks.forEach(name=>{
     rows.appendChild(createBook(name));
   });
 
-  for(let i=coreBooks.length;i<137;i++){
+  for(let i=coreBooks.length;i<100;i++){
     rows.appendChild(createBook(generateBookName()));
   }
 }
@@ -385,7 +387,6 @@ function initLibrary(){
    📊 UI
 ========================= */
 function renderStats(){
-
   let el = document.getElementById("stats");
 
   if(!el){
