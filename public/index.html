@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Cinematic Audiobooks</title>
+<title>🌌 Cinematic System Awakening</title>
 
 <style>
 
-/* 🌌 GLOBAL */
+/* 🌌 BACKGROUND */
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
@@ -19,159 +19,92 @@ body {
     radial-gradient(circle at center, #050510, #000000);
 
   background-size: 200% 200%;
-  animation: backgroundShift 15s ease infinite;
+  animation: bgShift 15s ease infinite;
 }
 
-@keyframes backgroundShift {
+@keyframes bgShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* ✨ MAGIC ROTATION */
+/* ✨ FX */
 body::before {
-  content: "";
-  position: fixed;
-  width: 200%;
-  height: 200%;
-  top: -50%;
-  left: -50%;
-
+  content:"";
+  position:fixed;
+  width:200%;
+  height:200%;
+  top:-50%;
+  left:-50%;
   background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
-  animation: rotateMagic 40s linear infinite;
+  animation: rotate 40s linear infinite;
+}
+@keyframes rotate {
+  to { transform: rotate(360deg); }
 }
 
-@keyframes rotateMagic {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 🌌 HOLOGRAPHIC LIGHT */
-body::after {
-  content: "";
-  position: fixed;
-  width: 200%;
-  height: 200%;
-  top: -50%;
-  left: -50%;
-
-  background: linear-gradient(
-    120deg,
-    transparent,
-    rgba(120,180,255,0.08),
-    transparent,
-    rgba(200,120,255,0.08),
-    transparent
-  );
-
-  animation: holoSweep 12s linear infinite;
-}
-
-@keyframes holoSweep {
-  0% { transform: rotate(0deg) translateX(-20%); }
-  100% { transform: rotate(360deg) translateX(20%); }
-}
-
-/* 🔥 FIRELIGHT */
-.fire-glow {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  height: 200px;
-  background: radial-gradient(circle, rgba(255,140,50,0.25), transparent);
-}
-
-/* 🌟 RUNES */
-.rune {
-  position: fixed;
-  font-size: 22px;
-  opacity: 0.12;
-  animation: floatRune 25s linear infinite;
-}
-
-@keyframes floatRune {
-  0% { transform: translateY(100vh) rotate(0deg); }
-  100% { transform: translateY(-10vh) rotate(360deg); }
-}
-
-/* 🔥 CANVAS */
-#fireflies {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-}
-
-/* 🎬 TITLE */
+/* 🎧 TITLE */
 h1 {
-  text-align: center;
-  font-size: 32px;
-
-  background: linear-gradient(90deg,#6df,#c8f,#6df);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-
-  animation: holoFlow 5s linear infinite;
+  text-align:center;
+  font-size:32px;
 }
 
-@keyframes holoFlow {
-  0% { background-position: 0% }
-  100% { background-position: 200% }
-}
-
-/* 🎥 SCENE */
+/* 🎬 SCENE */
 #sceneImage {
-  width: 100%;
-  height: 250px;
-  object-fit: cover;
+  width:100%;
+  height:220px;
+  object-fit:cover;
 }
 
-/* 💬 SUBTITLES */
+/* 💬 SUB */
 #subtitles {
-  position: fixed;
-  bottom: 100px;
-  width: 100%;
-  text-align: center;
-  background: rgba(0,0,0,0.6);
-  padding: 10px;
+  position:fixed;
+  bottom:90px;
+  width:100%;
+  text-align:center;
+  background:rgba(0,0,0,0.6);
+  padding:10px;
 }
 
-/* 📚 GRID */
-#rows {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* 🎮 UI */
+#playerStats {
+  text-align:center;
+  margin:10px;
 }
 
-/* 🔮 HOLOGRAPHIC CARDS */
+#rows, #cardCollection, #market {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+
+/* 🎴 CARD */
 .card {
-  margin: 15px;
-  padding: 20px;
-  width: 85%;
-  max-width: 400px;
-
-  border-radius: 20px;
-
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(12px);
-
-  border: 1px solid rgba(255,255,255,0.2);
-
-  text-align: center;
-  cursor: pointer;
-
-  transition: 0.3s;
-
-  box-shadow:
-    0 0 10px rgba(120,150,255,0.2);
+  margin:10px;
+  padding:15px;
+  width:160px;
+  border-radius:15px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.2);
+  text-align:center;
+  cursor:pointer;
 }
 
-/* ✨ POWER HOVER */
-.card:hover {
-  transform: scale(1.06);
+/* 🌈 RARITY */
+.common {border-color:gray;}
+.uncommon {border-color:green;}
+.rare {border-color:blue;}
+.epic {border-color:purple;}
+.legendary {border-color:gold;}
+.mythical {
+  border-color:red;
+  box-shadow:0 0 15px red;
+}
 
-  box-shadow:
-    0 0 25px rgba(120,180,255,0.7),
-    0 0 50px rgba(200,120,255,0.5);
+/* 🔘 BUTTON */
+button {
+  padding:6px 10px;
+  margin-top:5px;
 }
 
 </style>
@@ -179,118 +112,199 @@ h1 {
 
 <body>
 
-<canvas id="fireflies"></canvas>
-<div class="fire-glow"></div>
+<h1>🎧 Cinematic System Awakening</h1>
 
-<div class="rune" style="left:10%">✧</div>
-<div class="rune" style="left:40%">𓂀</div>
-<div class="rune" style="left:70%">⚚</div>
+<!-- 🎮 PLAYER -->
+<div id="playerStats"></div>
 
-<h1>🎧 Cinematic Audiobooks</h1>
+<button onclick="addXP(25)">⚡ Gain XP</button>
+<button onclick="unlockReward()">🎁 Reward</button>
+
+<h2 style="text-align:center;">📚 Audiobooks</h2>
+<div id="rows"></div>
 
 <img id="sceneImage">
 <div id="subtitles"></div>
-<div id="rows"></div>
+
+<h2 style="text-align:center;">🃏 Cards</h2>
+<div id="cardCollection"></div>
+
+<h2 style="text-align:center;">🛒 Market</h2>
+<div id="market"></div>
 
 <script>
 
-/* 🎧 MUSIC */
+// 🎧 AUDIO
 const music = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_7c1b9c3c6e.mp3");
 music.loop = true;
-music.volume = 0.3;
 
-/* 🎤 VOICE */
-function getVoice() {
-  return speechSynthesis.getVoices()[0];
-}
+// 📚 BOOKS
+const books = [
+"Vampire System",
+"Dragonic System",
+"Demonic Sword",
+"Beast Tamer",
+"Gods Eye"
+];
 
-/* 📚 BOOKS */
-const books = {
-  vampire: { title: "My Vampire System" },
-  dragonic: { title: "My Dragonic System" },
-  demonic: { title: "Birth of a Demonic Sword" },
-  beast: { title: "Legendary Beast Tamer" },
-  dragonInside: { title: "The Dragon Inside Me" },
-  godsEye: { title: "Gods Eye" },
-  vikings: { title: "Vikings: Valhalla Into the After" }
-};
-
-/* 🎴 BUILD UI */
 const rows = document.getElementById("rows");
-
-Object.keys(books).forEach(key=>{
-  const card = document.createElement("div");
-  card.className="card";
-  card.innerText = books[key].title;
-  card.onclick = ()=>playBook(books[key].title);
-  rows.appendChild(card);
+books.forEach(title=>{
+  const c = document.createElement("div");
+  c.className="card";
+  c.innerText=title;
+  c.onclick=()=>playBook(title);
+  rows.appendChild(c);
 });
 
-/* 🎬 PLAYER */
-const img = document.getElementById("sceneImage");
-const sub = document.getElementById("subtitles");
+// 🎮 PLAYER
+let player = {
+  level:1,
+  xp:0,
+  coins:100,
+  inventory:[]
+};
+
+let market=[];
+
+// 💾 SAVE
+function save(){
+  localStorage.setItem("player", JSON.stringify(player));
+}
+function load(){
+  const d = localStorage.getItem("player");
+  if(d) player = JSON.parse(d);
+}
+load();
+
+// 🌈 RARITY
+const rarityMult={
+  common:1,
+  uncommon:1.5,
+  rare:2,
+  epic:4,
+  legendary:8,
+  mythical:15
+};
+
+// ⚡ XP
+function addXP(x){
+  player.xp+=x;
+  if(player.xp>=player.level*50){
+    player.xp=0;
+    player.level++;
+    unlockReward();
+  }
+  save();
+  render();
+}
+
+// 🎲 DROP
+function getReward(){
+  const r=Math.random();
+  if(r<0.4)return{name:"Strength",rarity:"common"};
+  if(r<0.65)return{name:"Instinct",rarity:"uncommon"};
+  if(r<0.85)return{name:"Dragon Flame",rarity:"rare"};
+  if(r<0.95)return{name:"Shadow Step",rarity:"epic"};
+  if(r<0.995)return{name:"God Vision",rarity:"legendary"};
+  return{name:"Blood Core",rarity:"mythical"};
+}
+
+function unlockReward(){
+  const r=getReward();
+  let e=player.inventory.find(c=>c.name===r.name);
+  if(e)e.level++;
+  else player.inventory.push({...r,level:1,id:Date.now()});
+  render();
+}
+
+// 💪 POWER
+function power(){
+  let p=player.level;
+  player.inventory.forEach(c=>p+=c.level*2);
+  return p;
+}
+
+// 💰 VALUE
+function value(c){
+  return Math.floor(10*rarityMult[c.rarity]*c.level*(power()/10));
+}
+
+// 🛒 MARKET
+function sell(id){
+  let c=player.inventory.find(x=>x.id===id);
+  market.push({...c,price:value(c)});
+  player.inventory=player.inventory.filter(x=>x.id!==id);
+  render();
+}
+
+function buy(id){
+  let c=market.find(x=>x.id===id);
+  if(player.coins>=c.price){
+    player.coins-=c.price;
+    player.inventory.push(c);
+    market=market.filter(x=>x.id!==id);
+  }
+  render();
+}
+
+// 🎬 PLAYER
+const img=document.getElementById("sceneImage");
+const sub=document.getElementById("subtitles");
 
 function playBook(title){
-
   music.play();
 
   function next(){
+    addXP(10);
 
-    const text = title + ": A powerful moment unfolds...";
-    img.src = "https://picsum.photos/800/400?random=" + Math.random();
+    img.src="https://picsum.photos/800/400?"+Math.random();
+    sub.innerText=title+"... power rising";
 
-    sub.innerText = text;
-
-    const u = new SpeechSynthesisUtterance(text);
-    u.voice = getVoice();
-
-    u.onend = ()=>setTimeout(next, 800);
-
+    const u=new SpeechSynthesisUtterance(sub.innerText);
     speechSynthesis.speak(u);
+    u.onend=()=>setTimeout(next,800);
   }
-
   next();
 }
 
-/* ✨ FIREflies (OPTIMISED) */
-const canvas = document.getElementById("fireflies");
-const ctx = canvas.getContext("2d");
+// 🎨 RENDER
+function render(){
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+  document.getElementById("playerStats").innerHTML =
+    `🔥 Lv.${player.level} | XP ${player.xp} | ⚡ ${power()} | 💰 ${player.coins}`;
 
-let particles = [];
-
-for (let i = 0; i < 40; i++) {
-  particles.push({
-    x: Math.random()*canvas.width,
-    y: Math.random()*canvas.height,
-    r: Math.random()*2+1,
-    dx:(Math.random()-0.5)*0.3,
-    dy:(Math.random()-0.5)*0.3
-  });
-}
-
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  particles.forEach(p=>{
-    ctx.fillStyle="rgba(255,240,180,0.8)";
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.r*2,0,Math.PI*2);
-    ctx.fill();
-
-    p.x+=p.dx;
-    p.y+=p.dy;
-
-    if(p.x<0||p.x>canvas.width)p.dx*=-1;
-    if(p.y<0||p.y>canvas.height)p.dy*=-1;
+  const col=document.getElementById("cardCollection");
+  col.innerHTML="";
+  player.inventory.forEach(c=>{
+    let d=document.createElement("div");
+    d.className="card "+c.rarity;
+    d.innerHTML=`
+      <b>${c.name}</b>
+      <p>${c.rarity}</p>
+      <p>Lv.${c.level}</p>
+      <button onclick="sell(${c.id})">Sell</button>
+    `;
+    col.appendChild(d);
   });
 
-  requestAnimationFrame(draw);
+  const m=document.getElementById("market");
+  m.innerHTML="";
+  market.forEach(c=>{
+    let d=document.createElement("div");
+    d.className="card "+c.rarity;
+    d.innerHTML=`
+      <b>${c.name}</b>
+      <p>${c.rarity}</p>
+      <p>💰 ${c.price}</p>
+      <button onclick="buy(${c.id})">Buy</button>
+    `;
+    m.appendChild(d);
+  });
+
+  save();
 }
 
-draw();
+render();
 
 </script>
 
