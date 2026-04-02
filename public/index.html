@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Xavier OS</title>
 
 <link rel="stylesheet" href="styles.css">
@@ -13,138 +12,130 @@
 
 <canvas id="fireflies"></canvas>
 
-<h1>🎧 Xavier OS Audiobooks</h1>
+<h1>🎧 Xavier OS</h1>
+
+<!-- 🖼 Scene Image -->
+<img id="sceneImage" src="" alt="scene">
 
 <div class="audiobook-container">
 
-    <div class="audiobook-card" onclick="playBook('audio1.mp3')">
-        <div class="audiobook-title">My Vampire System</div>
-        <div class="audiobook-series">Tap to Play</div>
-    </div>
-
-    <div class="audiobook-card" onclick="playBook('audio2.mp3')">
-        <div class="audiobook-title">My Dragonic System</div>
-        <div class="audiobook-series">Tap to Play</div>
-    </div>
+  <div class="audiobook-card" onclick="startBook('vampire')">
+    My Vampire System
+  </div>
 
 </div>
 
-<!-- 🎧 Hidden Audio -->
 <audio id="audio"></audio>
-
-<!-- 📊 Visualizer -->
 <canvas id="visualizer"></canvas>
 
 <script>
+const books = {
+  vampire: {
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    scenes: [
+      "https://images.unsplash.com/photo-1503264116251-35a269479413",
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+      "https://images.unsplash.com/photo-1493244040629-496f6d136cc3"
+    ],
+    characters: ["Quinn", "Layla"]
+  }
+};
+
 const audio = document.getElementById("audio");
-const visCanvas = document.getElementById("visualizer");
-const visCtx = visCanvas.getContext("2d");
+const img = document.getElementById("sceneImage");
 
-let audioCtx, analyser, source, dataArray;
+let currentBook = null;
+let sceneIndex = 0;
 
-function setupAudio() {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioCtx.createAnalyser();
+/* ▶️ Start Book */
+function startBook(name) {
+  currentBook = books[name];
 
-    source = audioCtx.createMediaElementSource(audio);
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
+  audio.src = currentBook.audio;
 
-    analyser.fftSize = 128;
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
+  // 🔁 Resume progress
+  const savedTime = localStorage.getItem(name);
+  if (savedTime) audio.currentTime = savedTime;
+
+  audio.play();
+
+  changeScene();
 }
 
-function playBook(file) {
-    if (!audioCtx) setupAudio();
+/* 💾 Save progress */
+audio.addEventListener("timeupdate", () => {
+  if (currentBook) {
+    localStorage.setItem("vampire", audio.currentTime);
+  }
+});
 
-    audio.src = file;
-    audio.play();
+/* 🖼 Change scene every 10s */
+function changeScene() {
+  if (!currentBook) return;
+
+  img.src = currentBook.scenes[sceneIndex];
+  sceneIndex = (sceneIndex + 1) % currentBook.scenes.length;
+
+  setTimeout(changeScene, 10000);
 }
 
 /* 📊 Visualizer */
-function drawVisualizer() {
-    requestAnimationFrame(drawVisualizer);
+const vis = document.getElementById("visualizer");
+const vctx = vis.getContext("2d");
 
-    if (!analyser) return;
+let ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
+let analyser = ctxAudio.createAnalyser();
+let src = ctxAudio.createMediaElementSource(audio);
 
-    analyser.getByteFrequencyData(dataArray);
+src.connect(analyser);
+analyser.connect(ctxAudio.destination);
 
-    visCanvas.width = window.innerWidth;
-    visCanvas.height = 100;
+analyser.fftSize = 64;
+let buffer = new Uint8Array(analyser.frequencyBinCount);
 
-    visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+function drawVis() {
+  requestAnimationFrame(drawVis);
 
-    let barWidth = (visCanvas.width / dataArray.length);
+  analyser.getByteFrequencyData(buffer);
 
-    for (let i = 0; i < dataArray.length; i++) {
-        let height = dataArray[i];
+  vis.width = window.innerWidth;
+  vis.height = 100;
 
-        visCtx.fillStyle = "rgba(100,200,255,0.6)";
-        visCtx.fillRect(i * barWidth, visCanvas.height - height, barWidth - 2, height);
-    }
+  vctx.clearRect(0,0,vis.width,vis.height);
 
-    audioBoost = 1 + (Math.max(...dataArray) / 255);
+  buffer.forEach((v,i)=>{
+    vctx.fillRect(i*20, vis.height-v, 10, v);
+  });
 }
-
-drawVisualizer();
+drawVis();
 
 /* 🔥 Fireflies */
 const canvas = document.getElementById("fireflies");
 const ctx = canvas.getContext("2d");
 
-let particles = [];
-let audioBoost = 1;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+let particles = Array.from({length:80}, ()=>({
+  x: Math.random()*canvas.width,
+  y: Math.random()*canvas.height
+}));
+
+function animate(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  particles.forEach(p=>{
+    p.x += (Math.random()-0.5)*2;
+    p.y += (Math.random()-0.5)*2;
+
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fillStyle="white";
+    ctx.fill();
+  });
+
+  requestAnimationFrame(animate);
 }
-resize();
-window.addEventListener("resize", resize);
-
-class Firefly {
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.speedX = (Math.random() - 0.5) * 0.5;
-        this.speedY = (Math.random() - 0.5) * 0.5;
-    }
-
-    update() {
-        this.x += this.speedX * audioBoost;
-        this.y += this.speedY * audioBoost;
-
-        if (this.x < 0) this.x = canvas.width;
-        if (this.x > canvas.width) this.x = 0;
-        if (this.y < 0) this.y = canvas.height;
-        if (this.y > canvas.height) this.y = 0;
-    }
-
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 2 * audioBoost, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,200,0.8)";
-        ctx.shadowBlur = 20;
-        ctx.fill();
-    }
-}
-
-for (let i = 0; i < 80; i++) {
-    particles.push(new Firefly());
-}
-
-function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    particles.forEach(p => {
-        p.update();
-        p.draw();
-    });
-
-    requestAnimationFrame(animate);
-}
-
 animate();
 </script>
 
