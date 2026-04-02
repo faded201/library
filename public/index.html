@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Xavier OS</title>
-
 <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -14,67 +13,166 @@
 
 <h1>🎧 Xavier OS</h1>
 
-<!-- 🖼 Scene Image -->
 <img id="sceneImage" src="" alt="scene">
 
-<div class="audiobook-container">
-
-  <div class="audiobook-card" onclick="startBook(event,'vampire')">
-    My Vampire System
-  </div>
-
-</div>
+<div class="audiobook-container" id="bookContainer"></div>
 
 <audio id="audio"></audio>
 <canvas id="visualizer"></canvas>
 
 <script>
+
+/* 📚 YOUR CORE BOOKS */
 const books = {
+
   vampire: {
+    title: "My Vampire System",
     audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     scenes: [
-      "https://images.unsplash.com/photo-1503264116251-35a269479413",
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
-      "https://images.unsplash.com/photo-1493244040629-496f6d136cc3"
+      "https://picsum.photos/800/400?random=1",
+      "https://picsum.photos/800/400?random=2",
+      "https://picsum.photos/800/400?random=3"
+    ]
+  },
+
+  dragonic: {
+    title: "My Dragonic System",
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    scenes: [
+      "https://picsum.photos/800/400?random=4",
+      "https://picsum.photos/800/400?random=5",
+      "https://picsum.photos/800/400?random=6"
+    ]
+  },
+
+  demonic: {
+    title: "Birth of a Demonic Sword",
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    scenes: [
+      "https://picsum.photos/800/400?random=7",
+      "https://picsum.photos/800/400?random=8",
+      "https://picsum.photos/800/400?random=9"
+    ]
+  },
+
+  beast: {
+    title: "Legendary Beast Tamer",
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    scenes: [
+      "https://picsum.photos/800/400?random=10",
+      "https://picsum.photos/800/400?random=11",
+      "https://picsum.photos/800/400?random=12"
+    ]
+  },
+
+  dragonInside: {
+    title: "The Dragon Inside Me",
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    scenes: [
+      "https://picsum.photos/800/400?random=13",
+      "https://picsum.photos/800/400?random=14",
+      "https://picsum.photos/800/400?random=15"
+    ]
+  },
+
+  godsEye: {
+    title: "Gods Eye",
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+    scenes: [
+      "https://picsum.photos/800/400?random=16",
+      "https://picsum.photos/800/400?random=17",
+      "https://picsum.photos/800/400?random=18"
+    ]
+  },
+
+  vikings: {
+    title: "Vikings: Valhalla Into the After",
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+    scenes: [
+      "https://picsum.photos/800/400?random=19",
+      "https://picsum.photos/800/400?random=20",
+      "https://picsum.photos/800/400?random=21"
     ]
   }
+
 };
 
+/* 🎭 Genres */
+const genres = [
+  "Fantasy","Sci-Fi","Horror","Romance","Action",
+  "Mystery","Adventure","Supernatural","Drama","Comedy"
+];
+
+/* ➕ AUTO GENERATE TO 137 */
+let count = Object.keys(books).length + 1;
+
+while (Object.keys(books).length < 137) {
+  const genre = genres[count % genres.length];
+
+  books["book" + count] = {
+    title: genre + " Book " + count,
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    scenes: [
+      `https://picsum.photos/800/400?random=${count}`,
+      `https://picsum.photos/800/400?random=${count+200}`,
+      `https://picsum.photos/800/400?random=${count+400}`
+    ]
+  };
+
+  count++;
+}
+
+/* 🎴 CREATE CARDS */
+const container = document.getElementById("bookContainer");
+
+Object.keys(books).forEach(key => {
+  const book = books[key];
+
+  const card = document.createElement("div");
+  card.className = "audiobook-card";
+  card.innerText = book.title;
+
+  card.onclick = (e) => startBook(e, key);
+
+  container.appendChild(card);
+});
+
+/* 🎧 AUDIO SYSTEM */
 const audio = document.getElementById("audio");
 const img = document.getElementById("sceneImage");
 
 let currentBook = null;
+let currentKey = null;
 let sceneIndex = 0;
 
-/* ▶️ Start Book */
-function startBook(e, name) {
+function startBook(e, key) {
 
-  // 🔥 Highlight active card
   document.querySelectorAll('.audiobook-card')
     .forEach(card => card.classList.remove('playing'));
 
   e.currentTarget.classList.add('playing');
 
-  currentBook = books[name];
+  currentBook = books[key];
+  currentKey = key;
+
   audio.src = currentBook.audio;
 
-  // 💾 Resume progress
-  const savedTime = localStorage.getItem(name);
-  if (savedTime) audio.currentTime = savedTime;
+  const saved = localStorage.getItem(key);
+  if (saved) audio.currentTime = saved;
 
   audio.play();
 
   changeScene();
 }
 
-/* 💾 Save progress */
+/* 💾 SAVE */
 audio.addEventListener("timeupdate", () => {
-  if (currentBook) {
-    localStorage.setItem("vampire", audio.currentTime);
+  if (currentKey) {
+    localStorage.setItem(currentKey, audio.currentTime);
   }
 });
 
-/* 🖼 Scene changer */
+/* 🖼 SCENES */
 function changeScene() {
   if (!currentBook) return;
 
@@ -84,7 +182,7 @@ function changeScene() {
   setTimeout(changeScene, 10000);
 }
 
-/* 📊 Visualizer */
+/* 📊 VISUALIZER */
 const vis = document.getElementById("visualizer");
 const vctx = vis.getContext("2d");
 
@@ -114,7 +212,7 @@ function drawVis() {
 }
 drawVis();
 
-/* 🔥 Fireflies */
+/* 🔥 FIREFLIES */
 const canvas = document.getElementById("fireflies");
 const ctx = canvas.getContext("2d");
 
@@ -142,6 +240,7 @@ function animate(){
   requestAnimationFrame(animate);
 }
 animate();
+
 </script>
 
 </body>
