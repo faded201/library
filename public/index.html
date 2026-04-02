@@ -18,7 +18,7 @@
 
 <body>
 
-    <!-- 🔥 Fireflies Background -->
+    <!-- 🔥 Background Animation -->
     <canvas id="fireflies"></canvas>
 
     <h1 style="text-align:center;">🎧 Xavier OS Audiobooks</h1>
@@ -45,7 +45,7 @@
 
     </div>
 
-    <!-- 🔥 INSANE FIRE + INTERACTION SCRIPT -->
+    <!-- 🔥 INSANE SCRIPT -->
     <script>
     const canvas = document.getElementById("fireflies");
     const ctx = canvas.getContext("2d");
@@ -102,7 +102,6 @@
 
                 if (dist < 8000) {
                     ctx.strokeStyle = "rgba(255,255,200,0.08)";
-                    ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(particles[a].x, particles[a].y);
                     ctx.lineTo(particles[b].x, particles[b].y);
@@ -111,6 +110,12 @@
             }
         }
     }
+
+    canvas.addEventListener("click", (e) => {
+        for (let i = 0; i < 15; i++) {
+            particles.push(new Firefly(e.clientX, e.clientY));
+        }
+    });
 
     canvas.addEventListener("touchstart", (e) => {
         for (let i = 0; i < 15; i++) {
@@ -121,26 +126,17 @@
         }
     });
 
-    canvas.addEventListener("click", (e) => {
-        for (let i = 0; i < 15; i++) {
-            particles.push(new Firefly(e.clientX, e.clientY));
-        }
-    });
-
     function boostAudio() {
         audioBoost = 2;
         setTimeout(() => audioBoost = 1, 500);
     }
 
-    const oldPlay = window.playBook;
-    window.playBook = function(type) {
+    function playBook(type) {
         boostAudio();
-        if (oldPlay) oldPlay(type);
-        else alert("Playing: " + type);
-    };
+        alert("Playing: " + type);
+    }
 
     function init() {
-        particles = [];
         for (let i = 0; i < 100; i++) {
             particles.push(new Firefly());
         }
