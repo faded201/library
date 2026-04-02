@@ -1,26 +1,33 @@
-/* 🌌 MAGICAL ANIMATED BACKGROUND */
-body {
+/* 🌌 GLOBAL RESET */
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   font-family: system-ui, sans-serif;
+}
+
+/* 🌌 COSMIC BACKGROUND */
+body {
   color: white;
   overflow-x: hidden;
 
-  background: radial-gradient(circle at 20% 30%, #1a1f4b, transparent),
-              radial-gradient(circle at 80% 70%, #4b1a3a, transparent),
-              radial-gradient(circle at center, #050510, #000000);
+  background:
+    radial-gradient(circle at 20% 30%, #1a1f4b, transparent),
+    radial-gradient(circle at 80% 70%, #4b1a3a, transparent),
+    radial-gradient(circle at center, #050510, #000000);
 
   background-size: 200% 200%;
   animation: backgroundShift 15s ease infinite;
 }
 
-/* 🌠 COLOR SHIFT ANIMATION */
+/* 🌠 BACKGROUND SHIFT */
 @keyframes backgroundShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* ✨ MAGIC OVERLAY GLOW */
+/* ✨ MAGIC ROTATING GLOW */
 body::before {
   content: "";
   position: fixed;
@@ -32,11 +39,180 @@ body::before {
   background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
   animation: rotateMagic 40s linear infinite;
 
+  pointer-events: none;
   z-index: 0;
 }
 
-/* 🔄 SLOW ROTATION */
 @keyframes rotateMagic {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 🌌 HOLOGRAPHIC LIGHT SWEEP */
+body::after {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(120,180,255,0.08),
+    transparent,
+    rgba(200,120,255,0.08),
+    transparent
+  );
+
+  animation: holoSweep 12s linear infinite;
+
+  pointer-events: none;
+}
+
+@keyframes holoSweep {
+  0% { transform: rotate(0deg) translateX(-20%); }
+  100% { transform: rotate(360deg) translateX(20%); }
+}
+
+/* 🎬 HEADER */
+header {
+  text-align: center;
+  padding: 25px;
+  font-size: 30px;
+  font-weight: bold;
+  letter-spacing: 2px;
+
+  color: #dbe9ff;
+
+  text-shadow:
+    0 0 10px rgba(120,180,255,0.7),
+    0 0 25px rgba(120,180,255,0.4);
+}
+
+/* 🧿 GLASS PANEL */
+.panel {
+  margin: 20px;
+  padding: 20px;
+  border-radius: 20px;
+
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(15px);
+
+  border: 1px solid rgba(255,255,255,0.15);
+
+  box-shadow:
+    0 0 20px rgba(100,150,255,0.2),
+    inset 0 0 20px rgba(255,255,255,0.05);
+}
+
+/* 🔮 BOOK BUTTONS */
+.book-btn {
+  width: 85%;
+  margin: 15px auto;
+  padding: 18px;
+  border-radius: 30px;
+
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+
+  backdrop-filter: blur(10px);
+
+  text-align: center;
+  font-size: 16px;
+
+  transition: all 0.3s ease;
+
+  box-shadow:
+    0 0 10px rgba(120,150,255,0.2);
+}
+
+/* ✨ HOVER POWER */
+.book-btn:hover {
+  transform: scale(1.06);
+
+  box-shadow:
+    0 0 25px rgba(120,180,255,0.7),
+    0 0 50px rgba(200,120,255,0.5);
+
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+/* 🧬 HOLOGRAM TEXT */
+.hologram {
+  background: linear-gradient(90deg, #6df, #c8f, #6df);
+  background-size: 200%;
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  animation: holoFlow 5s linear infinite;
+}
+
+@keyframes holoFlow {
+  0% { background-position: 0% }
+  100% { background-position: 200% }
+}
+
+/* 📜 STORY BOX */
+#storyBox {
+  margin: 20px;
+  padding: 20px;
+  border-radius: 15px;
+
+  background: rgba(0,0,0,0.5);
+
+  border: 1px solid rgba(255,255,255,0.2);
+
+  line-height: 1.6;
+
+  box-shadow:
+    inset 0 0 15px rgba(100,150,255,0.3);
+}
+
+/* 🔥 FIRELIGHT AMBIENCE */
+.fire-glow {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 200px;
+
+  background: radial-gradient(
+    circle at center,
+    rgba(255,140,50,0.25),
+    transparent
+  );
+
+  pointer-events: none;
+}
+
+/* 🌟 FLOATING RUNES */
+.rune {
+  position: fixed;
+  font-size: 22px;
+  opacity: 0.12;
+
+  animation: floatRune 25s linear infinite;
+}
+
+@keyframes floatRune {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-10vh) rotate(360deg);
+  }
+}
+
+/* 🧿 FIREflies CANVAS */
+#fireflies {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+
+  filter: blur(1px);
 }
