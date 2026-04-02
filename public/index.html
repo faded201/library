@@ -13,233 +13,157 @@
 
 <h1>🎧 Xavier OS</h1>
 
-<img id="sceneImage" src="" alt="scene">
+<input id="search" placeholder="Search books...">
 
-<div class="audiobook-container" id="bookContainer"></div>
+<img id="sceneImage" src="">
+
+<div id="continueRow" class="row"></div>
+<div id="rows"></div>
 
 <audio id="audio"></audio>
 <canvas id="visualizer"></canvas>
 
 <script>
 
-/* 📚 YOUR CORE BOOKS */
-const books = {
+/* 📚 BOOK SYSTEM (same as before) */
+const books = {};
 
-  vampire: {
-    title: "My Vampire System",
-    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-    scenes: [
-      "https://picsum.photos/800/400?random=1",
-      "https://picsum.photos/800/400?random=2",
-      "https://picsum.photos/800/400?random=3"
-    ]
-  },
-
-  dragonic: {
-    title: "My Dragonic System",
-    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-    scenes: [
-      "https://picsum.photos/800/400?random=4",
-      "https://picsum.photos/800/400?random=5",
-      "https://picsum.photos/800/400?random=6"
-    ]
-  },
-
-  demonic: {
-    title: "Birth of a Demonic Sword",
-    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    scenes: [
-      "https://picsum.photos/800/400?random=7",
-      "https://picsum.photos/800/400?random=8",
-      "https://picsum.photos/800/400?random=9"
-    ]
-  },
-
-  beast: {
-    title: "Legendary Beast Tamer",
-    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-    scenes: [
-      "https://picsum.photos/800/400?random=10",
-      "https://picsum.photos/800/400?random=11",
-      "https://picsum.photos/800/400?random=12"
-    ]
-  },
-
-  dragonInside: {
-    title: "The Dragon Inside Me",
-    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-    scenes: [
-      "https://picsum.photos/800/400?random=13",
-      "https://picsum.photos/800/400?random=14",
-      "https://picsum.photos/800/400?random=15"
-    ]
-  },
-
-  godsEye: {
-    title: "Gods Eye",
-    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-    scenes: [
-      "https://picsum.photos/800/400?random=16",
-      "https://picsum.photos/800/400?random=17",
-      "https://picsum.photos/800/400?random=18"
-    ]
-  },
-
-  vikings: {
-    title: "Vikings: Valhalla Into the After",
-    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
-    scenes: [
-      "https://picsum.photos/800/400?random=19",
-      "https://picsum.photos/800/400?random=20",
-      "https://picsum.photos/800/400?random=21"
-    ]
-  }
-
-};
-
-/* 🎭 Genres */
-const genres = [
-  "Fantasy","Sci-Fi","Horror","Romance","Action",
-  "Mystery","Adventure","Supernatural","Drama","Comedy"
+/* 🔥 YOUR MAIN BOOKS */
+const mainBooks = [
+  "My Vampire System",
+  "My Dragonic System",
+  "Birth of a Demonic Sword",
+  "Legendary Beast Tamer",
+  "The Dragon Inside Me",
+  "Gods Eye",
+  "Vikings: Valhalla Into the After"
 ];
 
-/* ➕ AUTO GENERATE TO 137 */
-let count = Object.keys(books).length + 1;
-
-while (Object.keys(books).length < 137) {
-  const genre = genres[count % genres.length];
-
-  books["book" + count] = {
-    title: genre + " Book " + count,
+mainBooks.forEach((title, i) => {
+  books["main" + i] = {
+    title,
+    genre: "Main",
     audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
     scenes: [
-      `https://picsum.photos/800/400?random=${count}`,
-      `https://picsum.photos/800/400?random=${count+200}`,
-      `https://picsum.photos/800/400?random=${count+400}`
+      `https://picsum.photos/800/400?random=${i}`,
+      `https://picsum.photos/800/400?random=${i+100}`
     ]
+  };
+});
+
+/* 🎭 GENRES */
+const genres = ["Fantasy","Sci-Fi","Horror","Romance","Action"];
+
+/* ➕ GENERATE */
+let count = Object.keys(books).length;
+
+while (Object.keys(books).length < 137) {
+  let genre = genres[count % genres.length];
+
+  books["b" + count] = {
+    title: genre + " Book " + count,
+    genre,
+    audio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    scenes: [`https://picsum.photos/800/400?random=${count}`]
   };
 
   count++;
 }
 
-/* 🎴 CREATE CARDS */
-const container = document.getElementById("bookContainer");
+/* 🎴 BUILD UI */
+const rowsDiv = document.getElementById("rows");
 
-Object.keys(books).forEach(key => {
-  const book = books[key];
+function buildUI(filter="") {
+  rowsDiv.innerHTML = "";
 
-  const card = document.createElement("div");
-  card.className = "audiobook-card";
-  card.innerText = book.title;
+  let grouped = {};
 
-  card.onclick = (e) => startBook(e, key);
+  Object.entries(books).forEach(([key, b]) => {
+    if (!b.title.toLowerCase().includes(filter.toLowerCase())) return;
 
-  container.appendChild(card);
-});
+    if (!grouped[b.genre]) grouped[b.genre] = [];
+    grouped[b.genre].push({key, ...b});
+  });
 
-/* 🎧 AUDIO SYSTEM */
+  Object.keys(grouped).forEach(genre => {
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const title = document.createElement("h2");
+    title.innerText = genre;
+
+    const scroll = document.createElement("div");
+    scroll.className = "scroll";
+
+    grouped[genre].forEach(book => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerText = book.title;
+
+      card.onclick = (e)=>startBook(e, book.key);
+
+      scroll.appendChild(card);
+    });
+
+    row.appendChild(title);
+    row.appendChild(scroll);
+    rowsDiv.appendChild(row);
+  });
+}
+
+buildUI();
+
+/* 🔍 SEARCH */
+document.getElementById("search").oninput = (e)=>{
+  buildUI(e.target.value);
+};
+
+/* 🎧 PLAYER */
 const audio = document.getElementById("audio");
 const img = document.getElementById("sceneImage");
 
-let currentBook = null;
 let currentKey = null;
-let sceneIndex = 0;
 
-function startBook(e, key) {
+function startBook(e,key){
 
-  document.querySelectorAll('.audiobook-card')
-    .forEach(card => card.classList.remove('playing'));
-
-  e.currentTarget.classList.add('playing');
-
-  currentBook = books[key];
   currentKey = key;
 
-  audio.src = currentBook.audio;
+  audio.src = books[key].audio;
 
-  const saved = localStorage.getItem(key);
-  if (saved) audio.currentTime = saved;
+  let t = localStorage.getItem(key);
+  if(t) audio.currentTime = t;
 
   audio.play();
 
-  changeScene();
+  img.src = books[key].scenes[0];
+
+  saveContinue(key);
 }
 
 /* 💾 SAVE */
-audio.addEventListener("timeupdate", () => {
-  if (currentKey) {
-    localStorage.setItem(currentKey, audio.currentTime);
+audio.ontimeupdate = ()=>{
+  if(currentKey){
+    localStorage.setItem(currentKey,audio.currentTime);
   }
-});
+};
 
-/* 🖼 SCENES */
-function changeScene() {
-  if (!currentBook) return;
+/* 🧠 CONTINUE ROW */
+function saveContinue(key){
+  let row = document.getElementById("continueRow");
+  row.innerHTML = "<h2>Continue Listening</h2>";
 
-  img.src = currentBook.scenes[sceneIndex];
-  sceneIndex = (sceneIndex + 1) % currentBook.scenes.length;
-
-  setTimeout(changeScene, 10000);
-}
-
-/* 📊 VISUALIZER */
-const vis = document.getElementById("visualizer");
-const vctx = vis.getContext("2d");
-
-let ctxAudio = new (window.AudioContext || window.webkitAudioContext)();
-let analyser = ctxAudio.createAnalyser();
-let src = ctxAudio.createMediaElementSource(audio);
-
-src.connect(analyser);
-analyser.connect(ctxAudio.destination);
-
-analyser.fftSize = 64;
-let buffer = new Uint8Array(analyser.frequencyBinCount);
-
-function drawVis() {
-  requestAnimationFrame(drawVis);
-
-  analyser.getByteFrequencyData(buffer);
-
-  vis.width = window.innerWidth;
-  vis.height = 100;
-
-  vctx.clearRect(0,0,vis.width,vis.height);
-
-  buffer.forEach((v,i)=>{
-    vctx.fillRect(i*20, vis.height-v, 10, v);
+  Object.keys(localStorage).forEach(k=>{
+    if(books[k]){
+      let c = document.createElement("div");
+      c.className="card";
+      c.innerText = books[k].title;
+      c.onclick=()=>startBook(event,k);
+      row.appendChild(c);
+    }
   });
 }
-drawVis();
 
-/* 🔥 FIREFLIES */
-const canvas = document.getElementById("fireflies");
-const ctx = canvas.getContext("2d");
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let particles = Array.from({length:80}, ()=>({
-  x: Math.random()*canvas.width,
-  y: Math.random()*canvas.height
-}));
-
-function animate(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  particles.forEach(p=>{
-    p.x += (Math.random()-0.5)*2;
-    p.y += (Math.random()-0.5)*2;
-
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,2,0,Math.PI*2);
-    ctx.fillStyle="white";
-    ctx.fill();
-  });
-
-  requestAnimationFrame(animate);
-}
-animate();
+saveContinue();
 
 </script>
 
