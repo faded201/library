@@ -58,55 +58,40 @@ body::before{
 /* 📖 BOOK */
 .book{
   width:160px;
-  height:200px;
-  perspective:800px;
   margin:15px;
+  cursor:pointer;
+  transition:.3s;
 }
 
-.book-inner{
+.book:hover{
+  transform:scale(1.05);
+}
+
+/* 📷 COVER */
+.cover{
   width:100%;
-  height:100%;
-  transform-style:preserve-3d;
-  transition:1s;
-}
-
-.book.open .book-inner{
-  transform:rotateY(-140deg);
-}
-
-.page{
-  position:absolute;
-  width:100%;
-  height:100%;
-  background:#111;
+  height:140px;
   border-radius:10px;
-  box-shadow:0 0 15px orange;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  overflow:hidden;
+  box-shadow:0 0 15px rgba(255,140,60,0.4);
+}
+
+.cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transition:.4s;
+}
+
+.book:hover img{
+  transform:scale(1.1);
+}
+
+/* 📖 TITLE */
+.book-title{
   text-align:center;
-  padding:10px;
-  backface-visibility:hidden;
-}
-
-.page.back{
-  transform:rotateY(180deg);
-}
-
-/* ✨ PARTICLES */
-.particles{position:absolute;width:100%;height:100%}
-
-.particle{
-  position:absolute;
-  width:4px;
-  height:4px;
-  background:orange;
-  border-radius:50%;
-  animation:rise 3s linear;
-}
-
-@keyframes rise{
-  to{transform:translateY(-150px);opacity:0}
+  margin-top:6px;
+  font-size:14px;
 }
 
 /* 📖 READER */
@@ -135,16 +120,58 @@ button{
 
 h1{text-align:center;margin:20px}
 
+/* ⭐ FAVORITES */
+#favorites{
+  text-align:center;
+  margin:10px;
+  color:gold;
+}
+
+/* 🔐 ONBOARDING */
+#onboarding{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+.box{
+  background:#111;
+  padding:20px;
+  border-radius:10px;
+  width:300px;
+  text-align:center;
+}
+
+.box input{
+  width:100%;
+  margin:5px 0;
+  padding:8px;
+}
+
 </style>
 </head>
 
 <body>
+
+<div id="onboarding">
+  <div class="box">
+    <h2>🔮 Setup AI (Optional)</h2>
+    <input id="gemini" placeholder="Gemini API Key">
+    <input id="groq" placeholder="Groq API Key">
+    <button onclick="saveKeys()">Enter</button>
+  </div>
+</div>
 
 <div class="scripture-glow"></div>
 
 <h1>📜 Xavier-OS</h1>
 
 <div id="stats"></div>
+<div id="favorites"></div>
 
 <div style="text-align:center;">
   <button onclick="manualXP()">⚡ Gain XP</button>
@@ -167,26 +194,37 @@ h1{text-align:center;margin:20px}
   <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b0d9f.mp3">
 </audio>
 
-<audio id="whisper">
-  <source src="https://cdn.pixabay.com/audio/2022/03/10/audio_2b7c.mp3">
-</audio>
-
 <script>
+
+/* 🔑 KEYS */
+const AI_KEYS = {};
+
+/* SAVE KEYS */
+function saveKeys(){
+  AI_KEYS.GEMINI = document.getElementById("gemini").value;
+  AI_KEYS.GROQ = document.getElementById("groq").value;
+
+  localStorage.setItem("keys", JSON.stringify(AI_KEYS));
+  document.getElementById("onboarding").style.display="none";
+}
+
+/* LOAD KEYS */
+(function(){
+  const k = JSON.parse(localStorage.getItem("keys")||"{}");
+  Object.assign(AI_KEYS,k);
+  if(k.GEMINI||k.GROQ){
+    document.getElementById("onboarding").style.display="none";
+  }
+})();
 
 /* 🔊 AUDIO */
 const ambient=document.getElementById("ambient");
-const whisper=document.getElementById("whisper");
-
-document.body.addEventListener("click",()=>{
-  if(ambient) ambient.play().catch(()=>{});
-});
+document.body.addEventListener("click",()=>ambient.play().catch(()=>{}));
 
 /* 💡 LIGHT */
-const glow=document.querySelector(".scripture-glow");
-
 document.addEventListener("mousemove",e=>{
-  glow.style.setProperty("--x",e.clientX+"px");
-  glow.style.setProperty("--y",e.clientY+"px");
+  document.querySelector(".scripture-glow")
+  .style.setProperty("--x",e.clientX+"px");
 });
 
 /* 📚 CORE */
@@ -196,93 +234,23 @@ const coreBooks=[
 "Birth of a Demonic Sword","Legendary Beast Tamer"
 ];
 
-/* 🔥 GEN */
-const w=["Forbidden","Savage","Cursed","Immortal","Awakened"];
-const h=["System","King","Gate","Empire"];
-const e=["of Shadows","of Blood","of Chaos","of Night"];
+/* ❤️ FAVORITES */
+let fav = JSON.parse(localStorage.getItem("fav")||"[]");
 
-const gen=()=>`${w[Math.random()*w.length|0]} ${h[Math.random()*h.length|0]} ${e[Math.random()*e.length|0]}`;
-
-/* 🎮 PLAYER */
-let player={level:1,xp:0};
-let currentBook=null;
-
-/* 💾 SAVE */
-function save(){localStorage.setItem("xos",JSON.stringify(player))}
-function load(){
-  const d=localStorage.getItem("xos");
-  if(d) player=JSON.parse(d);
+function toggleFav(n){
+  fav = fav.includes(n)?fav.filter(x=>x!=n):[...fav,n];
+  localStorage.setItem("fav",JSON.stringify(fav));
+  renderFav();
 }
 
-/* 📖 STORY */
-const stories={};
-
-function story(title){
-  if(stories[title]) return stories[title];
-
-  let pages=[];
-  for(let i=1;i<=10;i++){
-    pages.push(`
-      <h3>${title} — Chapter ${i}</h3>
-      <p>
-      Power awakens within you.
-      ${title} begins.
-      Every step changes fate.
-      </p>
-    `);
-  }
-
-  stories[title]=pages;
-  return pages;
+function renderFav(){
+  const f=document.getElementById("favorites");
+  f.innerHTML="⭐ "+fav.join(" | ");
 }
 
-/* 📖 READER */
-let page=0,pages=[];
-
-function openReader(t){
-  currentBook=t;
-  pages=story(t);
-  page=parseInt(localStorage.getItem("p_"+t))||0;
-  document.getElementById("reader").style.display="flex";
-  renderPage();
-}
-
-function renderPage(){
-  document.getElementById("readerContent").innerHTML=pages[page];
-}
-
-function nextPage(){
-  if(page<pages.length-1){
-    page++;
-    localStorage.setItem("p_"+currentBook,page);
-    addXP();
-    renderPage();
-  }
-}
-
-function prevPage(){
-  if(page>0){
-    page--;
-    localStorage.setItem("p_"+currentBook,page);
-    renderPage();
-  }
-}
-
-function closeReader(){
-  document.getElementById("reader").style.display="none";
-}
-
-/* ✨ PARTICLES */
-function particles(el){
-  const c=el.querySelector(".particles");
-
-  setInterval(()=>{
-    const p=document.createElement("div");
-    p.className="particle";
-    p.style.left=Math.random()*100+"%";
-    c.appendChild(p);
-    setTimeout(()=>p.remove(),3000);
-  },200);
+/* 🖼️ IMAGE */
+function img(title){
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(title+" fantasy cinematic character")}`;
 }
 
 /* 📖 BOOK */
@@ -290,38 +258,55 @@ function createBook(name){
   const b=document.createElement("div");
   b.className="book";
 
-  if(coreBooks.includes(name)){
-    b.style.boxShadow="0 0 25px red,0 0 50px gold";
-  }
-
   b.innerHTML=`
-  <div class="book-inner">
-    <div class="page">${name}</div>
-    <div class="page back">📖</div>
-  </div>
-  <div class="particles"></div>`;
+    <div class="cover">
+      <img src="${img(name)}">
+    </div>
+    <div class="book-title">${name}</div>
+    <button onclick="toggleFav('${name}')">⭐</button>
+  `;
 
-  b.onclick=()=>{
-    b.classList.toggle("open");
-    if(whisper) whisper.play().catch(()=>{});
-    openReader(name);
-  };
-
-  particles(b);
+  b.onclick=()=>openReader(name);
   return b;
 }
 
-/* ⚡ XP */
-function addXP(){
-  player.xp+=15;
+/* 📖 STORY */
+function story(t){
+  return Array.from({length:10},(_,i)=>`
+    <h3>${t} — Chapter ${i+1}</h3>
+    <p>A cinematic journey unfolds... power awakens within.</p>
+  `);
+}
 
+/* 📖 READER */
+let page=0,pages=[],currentBook=null;
+
+function openReader(t){
+  currentBook=t;
+  pages=story(t);
+  page=0;
+  reader.style.display="flex";
+  renderPage();
+}
+
+function renderPage(){
+  readerContent.innerHTML=pages[page];
+}
+
+function nextPage(){if(page<pages.length-1){page++;renderPage();addXP();}}
+function prevPage(){if(page>0){page--;renderPage();}}
+function closeReader(){reader.style.display="none";}
+
+/* ⚡ XP */
+let player={level:1,xp:0};
+
+function addXP(){
+  player.xp+=10;
   if(player.xp>=player.level*100){
     player.xp=0;
     player.level++;
     spawn();
   }
-
-  save();
   render();
 }
 
@@ -331,39 +316,23 @@ function manualXP(){addXP();}
 function spawn(){
   const name=Math.random()<0.3
     ? coreBooks[Math.random()*coreBooks.length|0]
-    : gen();
+    : "Generated Fantasy Book";
 
-  document.getElementById("rows").appendChild(createBook(name));
-}
-
-/* 🚀 INIT */
-function init(){
-  load();
-
-  const rows=document.getElementById("rows");
-
-  coreBooks.forEach(n=>rows.appendChild(createBook(n)));
-
-  for(let i=coreBooks.length;i<137;i++){
-    rows.appendChild(createBook(gen()));
-  }
-
-  render();
+  rows.appendChild(createBook(name));
 }
 
 /* 📊 UI */
 function render(){
-  document.getElementById("stats").innerHTML=
-  `🔥 Level ${player.level} | ⚡ XP ${player.xp} | 📖 ${currentBook||"Choose"}`;
+  stats.innerHTML=`🔥 Level ${player.level} | ⚡ XP ${player.xp}`;
 }
 
-/* 🔄 LOOP */
-setInterval(()=>{
-  if(currentBook){
-    addXP();
-    if(Math.random()<0.25) spawn();
-  }
-},3000);
+/* 🚀 INIT */
+function init(){
+  coreBooks.forEach(n=>rows.appendChild(createBook(n)));
+  for(let i=0;i<130;i++) rows.appendChild(createBook("Mystery Book "+i));
+  renderFav();
+  render();
+}
 
 init();
 
