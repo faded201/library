@@ -5,9 +5,10 @@ body {
   background: radial-gradient(circle at center, #1a1f2b, #050507);
   color: white;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* 🔥 Fireflies Canvas */
+/* 🔥 Fireflies */
 #fireflies {
   position: fixed;
   top: 0;
@@ -17,7 +18,7 @@ body {
   z-index: 0;
 }
 
-/* 📊 Audio Visualizer */
+/* 📊 Visualizer */
 #visualizer {
   position: fixed;
   bottom: 0;
@@ -26,9 +27,25 @@ body {
   height: 100px;
   z-index: 3;
   pointer-events: none;
+
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
 }
 
-/* 🔝 Keep UI above */
+/* 🖼 Scene Image */
+#sceneImage {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  position: relative;
+  z-index: 2;
+
+  border-bottom: 2px solid rgba(255,255,255,0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+
+  animation: fadeScene 1s ease-in-out;
+}
+
+/* 🔝 UI */
 .audiobook-container,
 h1 {
   position: relative;
@@ -57,14 +74,13 @@ h1 {
   backdrop-filter: blur(12px);
 
   box-shadow: 0 8px 30px rgba(0,0,0,0.5);
-  color: white;
 
   animation: fadeIn 0.5s ease-in, float 4s ease-in-out infinite;
   transition: 0.3s;
   cursor: pointer;
 }
 
-/* ✨ Glow layer */
+/* ✨ Glow */
 .audiobook-card::before {
   content: "";
   position: absolute;
@@ -76,43 +92,16 @@ h1 {
   animation: rotateGlow 8s linear infinite;
 }
 
+/* ▶️ Playing */
+.audiobook-card.playing {
+  box-shadow: 0 0 25px rgba(100,200,255,0.8);
+  transform: scale(1.05);
+}
+
 /* 🖱 Hover */
 .audiobook-card:hover {
   transform: translateY(-8px) scale(1.05);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.8);
 }
-
-/* 📚 Text */
-.audiobook-title {
-  font-size: 1.3em;
-  margin-bottom: 10px;
-}
-
-.audiobook-series {
-  font-size: 0.9em;
-  color: #bbb;
-  margin-bottom: 15px;
-}
-
-/* 🔘 Button */
-.audiobook-button {
-  background: linear-gradient(135deg, #4a90e2, #6fc3ff);
-  border: none;
-  border-radius: 8px;
-  padding: 10px;
-  color: white;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.audiobook-button:hover {
-  transform: scale(1.1);
-}
-
-/* 🎨 Series borders */
-.series-my-vampire-system { border-left: 5px solid #9b59b6; }
-.series-my-dragonic-system { border-left: 5px solid #e67e22; }
-.series-shadow-blade { border-left: 5px solid #2980b9; }
 
 /* ✨ Animations */
 @keyframes fadeIn {
@@ -131,13 +120,18 @@ h1 {
   100% { transform: rotate(360deg); }
 }
 
-/* 🌟 Title glow */
+@keyframes fadeScene {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* 🌟 Title */
 h1 {
   text-align: center;
   text-shadow: 0 0 10px rgba(255,255,255,0.6);
 }
 
-/* 📱 Mobile Optimization */
+/* 📱 Mobile */
 @media (max-width: 600px) {
   .audiobook-card {
     width: 90%;
