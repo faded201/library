@@ -17,7 +17,7 @@
 
 <body>
 
-    <!-- 🔥 Fireflies Canvas (MUST be here) -->
+    <!-- 🔥 Fireflies background -->
     <canvas id="fireflies"></canvas>
 
     <h1 style="text-align:center;">🎧 Xavier OS Audiobooks</h1>
@@ -27,29 +27,27 @@
         <div class="audiobook-card series-my-vampire-system">
             <div class="audiobook-title">My Vampire System</div>
             <div class="audiobook-series">Quinn Talen Universe</div>
-            <button class="audiobook-button" onclick="playBook('vampire')">▶ Play</button>
+            <button class="audiobook-button">▶ Play</button>
         </div>
 
         <div class="audiobook-card series-my-dragonic-system">
             <div class="audiobook-title">My Dragonic System</div>
             <div class="audiobook-series">Dragon Saga</div>
-            <button class="audiobook-button" onclick="playBook('dragon')">▶ Play</button>
+            <button class="audiobook-button">▶ Play</button>
         </div>
 
         <div class="audiobook-card series-shadow-blade">
             <div class="audiobook-title">Shadow Blade</div>
             <div class="audiobook-series">Dark Assassin Series</div>
-            <button class="audiobook-button" onclick="playBook('shadow')">▶ Play</button>
+            <button class="audiobook-button">▶ Play</button>
         </div>
 
     </div>
 
-    <!-- 🔥 Fireflies Script (ALWAYS at bottom) -->
+    <!-- 🔥 Fireflies script -->
     <script>
     const canvas = document.getElementById("fireflies");
     const ctx = canvas.getContext("2d");
-
-    let particles = [];
 
     function resize() {
         canvas.width = window.innerWidth;
@@ -58,56 +56,41 @@
     resize();
     window.addEventListener("resize", resize);
 
-    class Firefly {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.radius = Math.random() * 2 + 1;
-            this.speedX = (Math.random() - 0.5) * 0.5;
-            this.speedY = (Math.random() - 0.5) * 0.5;
-            this.opacity = Math.random();
-        }
+    let particles = [];
 
-        update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-
-            this.opacity += (Math.random() - 0.5) * 0.05;
-            this.opacity = Math.max(0.2, Math.min(this.opacity, 1));
-
-            if (this.x < 0) this.x = canvas.width;
-            if (this.x > canvas.width) this.x = 0;
-            if (this.y < 0) this.y = canvas.height;
-            if (this.y > canvas.height) this.y = 0;
-        }
-
-        draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 200, ${this.opacity})`;
-            ctx.shadowColor = "rgba(255,255,150,0.8)";
-            ctx.shadowBlur = 10;
-            ctx.fill();
-        }
-    }
-
-    function init() {
-        particles = [];
-        for (let i = 0; i < 80; i++) {
-            particles.push(new Firefly());
-        }
+    for (let i = 0; i < 60; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            speedX: Math.random() - 0.5,
+            speedY: Math.random() - 0.5
+        });
     }
 
     function animate() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         particles.forEach(p => {
-            p.update();
-            p.draw();
+            p.x += p.speedX;
+            p.y += p.speedY;
+
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255,255,200,0.8)";
+            ctx.shadowColor = "rgba(255,255,150,0.8)";
+            ctx.shadowBlur = 10;
+            ctx.fill();
         });
+
         requestAnimationFrame(animate);
     }
 
-    init();
     animate();
     </script>
 
