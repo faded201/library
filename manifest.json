@@ -1,21 +1,24 @@
 {
-  "name": "Xavier OS",
+  "name": "Xavier-OS Awakening",
   "short_name": "Xavier",
-  "start_url": "/",
+  "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#000000",
+  "theme_color": "#ffd27a",
   "orientation": "portrait",
+  "description": "The autonomous AI-driven forbidden library archive.",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "https://image.pollinations.ai/prompt/gold%20eye%20of%20providence%20luxury%20logo%20black%20background?width=192&height=192&nologo=true",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://image.pollinations.ai/prompt/gold%20eye%20of%20providence%20luxury%20logo%20black%20background?width=512&height=512&nologo=true",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
