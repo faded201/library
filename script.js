@@ -6,6 +6,20 @@ if ('serviceWorker' in navigator) {
 }
 
 /* =========================
+   🌐 CORE KEYS & CONFIG (AUTONOMOUS)
+========================= */
+const AI_KEYS = {
+  GEMINI: "AIzaSyB0I7AlW5MlEE73NvXgJ-G_d8Ie8h23okI", // Your General Access Token
+  GROQ: "",
+  OPENROUTER: "",
+  HUGGINGFACE: ""
+};
+
+// Your GitHub Access Token for Background Archiving
+const GITHUB_TOKEN = "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";
+const REPO_PATH = "faded201/Xavier-OS";
+
+/* =========================
    🔊 SOUND
 ========================= */
 const ambient = document.getElementById("ambient");
@@ -69,17 +83,7 @@ function load(){
 }
 
 /* =========================
-   🌐 AI KEYS
-========================= */
-const AI_KEYS = {
-  GEMINI: "",
-  GROQ: "",
-  OPENROUTER: "",
-  HUGGINGFACE: ""
-};
-
-/* =========================
-   🧠 AI ROUTER
+   🧠 AI ROUTER (INJECTED WITH GEMINI 3 FLASH)
 ========================= */
 const storyCache = {};
 
@@ -89,6 +93,7 @@ async function generateStory(title){
 
   let text = null;
 
+  // Prioritize Gemini 3 Flash for the most modern 2026 experience
   if(AI_KEYS.GEMINI) text = await tryAI(geminiAI, title);
   if(!text && AI_KEYS.GROQ) text = await tryAI(groqAI, title);
   if(!text && AI_KEYS.OPENROUTER) text = await tryAI(openRouterAI, title);
@@ -102,6 +107,10 @@ async function generateStory(title){
   `);
 
   storyCache[title] = pages;
+
+  // AUTONOMOUS BACKGROUND POST: Saves to GitHub without blocking UI
+  autoPostToGitHub(title, text);
+
   return pages;
 }
 
@@ -114,18 +123,18 @@ async function tryAI(fn, title){
 }
 
 /* =========================
-   🟢 GEMINI
+   🟢 GEMINI (UPDATED TO 3-FLASH 2026)
 ========================= */
 async function geminiAI(title){
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${AI_KEYS.GEMINI}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${AI_KEYS.GEMINI}`,
     {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body:JSON.stringify({
         contents:[{
           parts:[{
-            text:`Write a cinematic dark fantasy story titled "${title}".`
+            text:`You are Xavier. Write a cinematic dark fantasy story titled "${title}". Focus on deep world-building and atmosphere.`
           }]
         }]
       })
@@ -134,6 +143,37 @@ async function geminiAI(title){
 
   const data = await res.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text;
+}
+
+/* =========================
+   🚀 AUTONOMOUS GITHUB POST
+========================= */
+async function autoPostToGitHub(title, text) {
+  const filename = `library/${title.replace(/\s+/g, '_').toLowerCase()}.json`;
+  const storyData = { 
+    title, 
+    text, 
+    image: getBookImage(title),
+    timestamp: new Date().toISOString() 
+  };
+  const encodedContent = btoa(unescape(encodeURIComponent(JSON.stringify(storyData, null, 2))));
+
+  try {
+    await fetch(`https://api.github.com/repos/${REPO_PATH}/contents/${filename}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${GITHUB_TOKEN}`,
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify({
+        message: `Xavier-OS Auto-Gen: ${title}`,
+        content: encodedContent
+      })
+    });
+    console.log(`✅ ${title} archived to GitHub successfully.`);
+  } catch (e) {
+    console.error("Auto-post failed:", e);
+  }
 }
 
 /* =========================
@@ -272,6 +312,7 @@ function prevPage(){
 
 function closeReader(){
   document.getElementById("reader").style.display = "none";
+  speechSynthesis.cancel();
 }
 
 /* =========================
