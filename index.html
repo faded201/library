@@ -1,79 +1,280 @@
-/* =========================
-   🌌 RESET & THEME
-========================= */
-* { margin:0; padding:0; box-sizing:border-box; font-family: 'Cinzel', serif; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xavier AI Library | Heavenly Thief</title>
+  <style>
+    /* =========================
+       🌌 GLOBAL RESET & FONTS
+    ========================= */
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400&display=swap');
 
-body {
-    background: radial-gradient(circle at center, #1a120b, #050507);
-    color: white;
-    min-height: 100vh;
-    overflow-x: hidden;
-}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-h1 { text-align: center; padding-top: 40px; color: #f5e6c8; text-shadow: 0 0 20px rgba(255,160,80,0.5); }
-#stats { text-align: center; padding: 10px; color: #ffd700; font-size: 14px; letter-spacing: 2px; }
+    body {
+      color: white;
+      overflow-x: hidden;
+      background: radial-gradient(circle at center, #0d0d12, #020203);
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+    }
 
-/* =========================
-   📚 GRID & BOOK BASE
-========================= */
-#rows { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; padding: 40px; }
+    /* 📜 BACKGROUND SCRIPTURE TEXTURE */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: url("https://i.imgur.com/8IuucQZ.png");
+      opacity: 0.04;
+      animation: moveScript 150s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-.book {
-    position: relative; width: 180px; height: 270px;
-    border-radius: 12px; cursor: pointer;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    background: #2a1b12 url('https://www.transparenttextures.com/patterns/dark-leather.png');
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    border: 2px solid #3d2b1f;
-}
+    /* 🕯️ DYNAMIC AMBIENT LIGHT */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255, 170, 90, 0.1), transparent),
+        radial-gradient(circle at 70% 60%, rgba(255, 120, 60, 0.08), transparent);
+      filter: blur(80px);
+      animation: lightMove 30s infinite alternate ease-in-out;
+      pointer-events: none;
+      z-index: 1;
+    }
 
-/* =========================
-   💀 DEAD STATE
-========================= */
-.book.dead { filter: grayscale(100%) brightness(0.4); }
+    @keyframes lightMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(100px, -50px); }
+    }
 
-.placeholder-icon {
-    width: 110px; height: 150px;
-    border-radius: 50% / 40%;
-    border: 1px solid rgba(255, 215, 0, 0.1);
-    background: rgba(0,0,0,0.3);
-    display: flex; align-items: center; justify-content: center;
-}
+    @keyframes moveScript {
+      to { background-position: 100% 100%; }
+    }
 
-.endless-tag {
-    position: absolute; top: 10px; left: 10px;
-    border: 1px solid #ffd700; color: #ffd700;
-    font-size: 8px; padding: 2px 6px; font-weight: bold;
-}
+    /* =========================
+       🧿 HEADER & STATS
+    ========================= */
+    h1 {
+      text-align: center;
+      padding: 40px 20px 10px;
+      font-family: 'Cinzel', serif;
+      color: #f5e6c8;
+      text-shadow: 0 0 25px rgba(255, 180, 80, 0.4);
+      letter-spacing: 4px;
+      position: relative;
+      z-index: 2;
+    }
 
-.book-title { margin-top: 15px; font-size: 12px; text-align: center; color: #aaa; padding: 0 10px; }
+    #stats {
+      text-align: center;
+      padding-bottom: 30px;
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      color: #ffd700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      position: relative;
+      z-index: 2;
+    }
 
-/* =========================
-   🔥 ALIVE STATE
-========================= */
-.book.active {
-    filter: grayscale(0%) brightness(1.1);
-    border-color: #ffd700;
-    transform: scale(1.05) translateY(-10px);
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
-}
+    /* =========================
+       📚 GRID & BOOK BASE
+    ========================= */
+    #rows {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 25px;
+      padding: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
 
-.book-cover { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; z-index: 1; }
-.book.active .book-cover { opacity: 1; }
-.book-cover img { 
-    width: 100%; height: 100%; object-fit: cover; 
-    mask-image: radial-gradient(circle, black 60%, transparent 100%);
-}
+    .book {
+      position: relative;
+      width: 180px;
+      height: 270px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      background: #1a120b url('https://www.transparenttextures.com/patterns/dark-leather.png');
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+      border: 1px solid rgba(255, 215, 0, 0.05);
+    }
 
-/* =========================
-   📖 READER OVERLAY
-========================= */
-#reader {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.95);
-    display: none; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 1000; padding: 40px;
-}
-#readerContent { max-width: 600px; line-height: 1.8; color: #f5e6c8; font-size: 1.2rem; }
-.close-btn { color: #ff4444 !important; border-color: #ff4444 !important; }
-button { padding: 10px 20px; background: #2a2015; color: #ffd700; border: 1px solid #ffd700; cursor: pointer; margin: 10px; }
+    /* 💀 DEAD STATE */
+    .book.dead {
+      filter: grayscale(100%) brightness(0.3);
+      border: 1px solid rgba(110, 74, 40, 0.3);
+    }
+
+    .placeholder-icon {
+      width: 110px;
+      height: 150px;
+      border-radius: 50% / 40%;
+      border: 1px solid rgba(255, 215, 0, 0.1);
+      background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.08), rgba(255,255,255,0.01));
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    /* 🔥 ALIVE STATE */
+    .book.active {
+      filter: grayscale(0%) brightness(1);
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+      transform: scale(1.08) translateY(-10px);
+    }
+
+    .book-cover {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 1.2s ease-in-out;
+      z-index: 1;
+    }
+
+    .book.active .book-cover {
+      opacity: 1;
+    }
+
+    .book-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      mask-image: radial-gradient(circle, black 60%, transparent 100%);
+    }
+
+    .book-title {
+      margin-top: 15px;
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      text-align: center;
+      color: #aaa;
+      padding: 0 10px;
+      z-index: 5;
+    }
+
+    .book.active .book-title {
+      color: #f5e6c8;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    }
+
+    /* =========================
+       📲 ONBOARDING (Key Entry)
+    ========================= */
+    #onboarding {
+      position: fixed;
+      inset: 0;
+      background: #050507;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(20px);
+    }
+
+    .onboard-box {
+      background: rgba(20, 15, 10, 0.95);
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      width: 350px;
+      border: 1px solid #ffd70033;
+      box-shadow: 0 0 50px rgba(0,0,0,1);
+    }
+
+    input {
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      border-radius: 5px;
+      border: 1px solid #333;
+      background: #111;
+      color: gold;
+    }
+
+    button {
+      padding: 12px 25px;
+      background: #2a1b12;
+      color: #ffd700;
+      border: 1px solid #ffd700;
+      cursor: pointer;
+      font-family: 'Cinzel', serif;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #ffd700;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="onboarding">
+    <div class="onboard-box">
+      <h2 style="font-family:'Cinzel'; color:#f5e6c8; margin-bottom:20px;">Xavier-OS System</h2>
+      <input type="password" id="geminiKey" placeholder="Enter Gemini API Key">
+      <input type="password" id="githubKey" placeholder="Enter GitHub Token">
+      <button onclick="startSystem()">AWAKEN SYSTEM</button>
+    </div>
+  </div>
+
+  <h1>Xavier AI Library</h1>
+  <div id="stats">System Status: Awaiting Connection</div>
+
+  <div id="rows">
+    <div class="book dead" onclick="activateBook(this)">
+      <div class="placeholder-icon"></div>
+      <div class="book-title">Heavenly Thief</div>
+      <div class="book-cover">
+        <img src="https://i.imgur.com/your-image-url.jpg" alt="Cover">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function startSystem() {
+      const gKey = document.getElementById('geminiKey').value;
+      if(gKey) {
+        document.getElementById('onboarding').style.display = 'none';
+        document.getElementById('stats').innerText = "System Status: Online | Source: Gemini-Flash";
+      }
+    }
+
+    function activateBook(el) {
+      // Toggle the active/alive state
+      if (el.classList.contains('dead')) {
+        el.classList.remove('dead');
+        el.classList.add('active');
+      } else {
+        el.classList.remove('active');
+        el.classList.add('dead');
+      }
+    }
+  </script>
+</body>
+</html>
