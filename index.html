@@ -75,8 +75,8 @@ button:hover{background:#ffd27a;color:#000}
 
 <div id="onboarding">
   <div class="box">
-    <h2 style="color:#ffd27a; margin-bottom:10px">XAVIER INITIALIZATION</h2>
-    <p style="font-size:0.8rem; color:#888">Enter Access Tokens for Autonomous Operation</p>
+    <h2 style="color:#ffd27a; margin-bottom:10px">XAVIER-OS V2 INITIALIZATION</h2>
+    <p style="font-size:0.8rem; color:#888">Enter Tokens for Autonomous v2 Operation</p>
     <input id="gemini" type="password" placeholder="Gemini API Key">
     <input id="github" type="password" placeholder="GitHub Access Token">
     <button onclick="saveKeys()">WAKE XAVIER</button>
@@ -112,9 +112,10 @@ button:hover{background:#ffd27a;color:#000}
 <audio id="whisper"><source src="https://www.soundjay.com/buttons/sounds/button-29.mp3"></audio>
 
 <script>
-/* 🔑 SYSTEM KEYS */
+/* 🔑 SYSTEM KEYS & V2 CONFIG */
 const AI_KEYS = { GEMINI: "", GITHUB: "" };
 const REPO_PATH = "faded201/Xavier-OS";
+const CACHE_NAME = "xavier-os-v2";
 
 /* SAVE & LOAD KEYS */
 function saveKeys(){
@@ -134,8 +135,10 @@ function saveKeys(){
 /* 💡 LIGHT FOLLOW */
 document.addEventListener("mousemove", e => {
   const glow = document.querySelector(".scripture-glow");
-  glow.style.setProperty("--x", e.clientX + "px");
-  glow.style.setProperty("--y", e.clientY + "px");
+  if(glow) {
+    glow.style.setProperty("--x", e.clientX + "px");
+    glow.style.setProperty("--y", e.clientY + "px");
+  }
 });
 
 /* 🔊 AUDIO CONTROL */
@@ -156,16 +159,14 @@ async function autoArchive(title, text, image) {
     await fetch(`https://api.github.com/repos/${REPO_PATH}/contents/${filename}`, {
       method: "PUT",
       headers: { "Authorization": `Bearer ${AI_KEYS.GITHUB}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ message: `Xavier-OS Auto-Gen: ${title}`, content: content })
+      body: JSON.stringify({ message: `Xavier-OS v2 Auto-Gen: ${title}`, content: content })
     });
-    console.log("Archive Synchronized.");
   } catch (e) { console.error("Archive Failed."); }
 }
 
 /* 🧠 AI STORY GENERATION (GEMINI 3 FLASH) */
 async function generateAIPages(title) {
     if(!AI_KEYS.GEMINI) return ["<p>No Gemini Key detected. Access denied.</p>"];
-    
     try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AI_KEYS.GEMINI}`, {
             method: "POST",
@@ -174,10 +175,7 @@ async function generateAIPages(title) {
         });
         const data = await res.json();
         const fullText = data.candidates[0].content.parts[0].text;
-        
-        // Auto-Archive in background
         autoArchive(title, fullText, `https://image.pollinations.ai/prompt/${encodeURIComponent(title)}`);
-        
         return fullText.match(/.{1,800}/g).map(t => `<p>${t}</p>`);
     } catch (e) { return ["<p>The archives are failing. Check connection.</p>"]; }
 }
@@ -191,7 +189,6 @@ async function openReader(t){
   document.getElementById("readerArt").src = `https://image.pollinations.ai/prompt/${encodeURIComponent(t + " dark fantasy portrait")}`;
   document.getElementById("readerContent").innerHTML = "<h2>Awakening Archive...</h2>";
   document.getElementById("reader").style.display = "flex";
-  
   pages = await generateAIPages(t);
   page = 0;
   renderPage();
@@ -244,6 +241,9 @@ function renderStats(){
   document.getElementById("stats").innerHTML = `🔥 Rank: Level ${player.level} | ⚡ Essence: ${player.xp} XP`;
 }
 
+/* =========================
+   🚀 V2 SERVICE WORKER REGISTRATION
+========================= */
 function init(){
   const rows = document.getElementById("rows");
   coreBooks.forEach(n => rows.appendChild(createBook(n)));
@@ -251,7 +251,11 @@ function init(){
   renderStats();
   
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        console.log('Xavier v2 Service Worker Active');
+      });
+    });
   }
 }
 
