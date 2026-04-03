@@ -1,6 +1,23 @@
 {
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
   "routes": [
-    { "handle": "filesystem" },
-    { "src": "/", "dest": "/public/index.html" }
+    { 
+      "handle": "filesystem" 
+    },
+    { 
+      "src": "/sw.js", 
+      "headers": { "cache-control": "no-cache" },
+      "dest": "/sw.js" 
+    },
+    { 
+      "src": "/manifest.json", 
+      "dest": "/manifest.json" 
+    },
+    { 
+      "src": "/(.*)", 
+      "dest": "/index.html" 
+    }
   ]
 }
