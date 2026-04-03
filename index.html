@@ -5,190 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Xavier AI Library | Awakening</title>
   <style>
-    /* =========================
-       🌌 GLOBAL RESET & THEME
-    ========================= */
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400&display=swap');
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      color: white;
-      overflow-x: hidden;
-      background: radial-gradient(circle at center, #0d0d12, #020203);
-      min-height: 100vh;
-      font-family: 'Inter', sans-serif;
-    }
-
-    /* 📜 BACKGROUND SCRIPTURE TEXTURE */
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background: url("https://i.imgur.com/8IuucQZ.png");
-      opacity: 0.04;
-      animation: moveScript 150s linear infinite;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* 🕯️ DYNAMIC AMBIENT LIGHT */
-    body::after {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 30%, rgba(255, 170, 90, 0.1), transparent),
-        radial-gradient(circle at 70% 60%, rgba(255, 120, 60, 0.08), transparent);
-      filter: blur(80px);
-      animation: lightMove 30s infinite alternate ease-in-out;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    @keyframes lightMove {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(100px, -50px); }
-    }
-
-    @keyframes moveScript {
-      to { background-position: 100% 100%; }
-    }
-
-    /* =========================
-       🧿 HEADER & STATS UI
-    ========================= */
-    h1 {
-      text-align: center;
-      padding: 40px 20px 10px;
-      font-family: 'Cinzel', serif;
-      color: #f5e6c8;
-      text-shadow: 0 0 25px rgba(255, 180, 80, 0.4);
-      letter-spacing: 4px;
-      position: relative;
-      z-index: 2;
-    }
-
-    #stats {
-      text-align: center;
-      padding-bottom: 30px;
-      font-family: 'Cinzel', serif;
-      font-size: 13px;
-      color: #ffd700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      opacity: 0.8;
-      position: relative;
-      z-index: 2;
-    }
-
-    /* =========================
-       📚 GRID & BOOK BASE
-    ========================= */
-    #rows {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 25px;
-      padding: 20px;
-      max-width: 1400px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 2;
-    }
-
-    .book {
-      position: relative;
-      width: 180px;
-      height: 270px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
-      background: #1a120b url('https://www.transparenttextures.com/patterns/dark-leather.png');
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.7);
-      border: 1px solid rgba(255, 215, 0, 0.05);
-    }
-
-    .book.dead {
-      filter: grayscale(100%) brightness(0.3);
-      border: 1px solid rgba(110, 74, 40, 0.3);
-    }
-
-    .placeholder-icon {
-      width: 110px; height: 150px;
-      border-radius: 50% / 40%;
-      border: 1px solid rgba(255, 215, 0, 0.1);
-      background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.08), rgba(255,255,255,0.01));
-      background-size: 200% 100%;
-      animation: shimmer 3s infinite linear;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: -200% 0; }
-      100% { background-position: 200% 0; }
-    }
-
-    .book.active {
-      filter: grayscale(0%) brightness(1);
-      border: 2px solid #ffd700;
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
-      transform: scale(1.08) translateY(-10px);
-    }
-
-    .book-cover {
-      position: absolute; inset: 0;
-      opacity: 0; transition: opacity 1.2s ease-in-out;
-      z-index: 1;
-    }
-
-    .book.active .book-cover { opacity: 1; }
-
-    .book-cover img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      mask-image: radial-gradient(circle, black 60%, transparent 100%);
-      -webkit-mask-image: radial-gradient(circle, black 60%, transparent 100%);
-    }
-
-    .book-title {
-      margin-top: 15px;
-      font-family: 'Cinzel', serif;
-      font-size: 12px;
-      text-align: center;
-      color: #aaa;
-      padding: 0 10px;
-      z-index: 5;
-    }
-
-    /* =========================
-       📲 ONBOARDING UI
-    ========================= */
-    #onboarding {
-      position: fixed; inset: 0;
-      background: #050507;
-      display: flex; justify-content: center; align-items: center;
-      z-index: 9999;
-    }
-
-    .onboard-box {
-      background: rgba(20, 15, 10, 0.95);
-      padding: 40px; border-radius: 15px;
-      text-align: center; width: 380px;
-      border: 1px solid rgba(255, 215, 0, 0.2);
-    }
-
-    .key-group { margin-bottom: 20px; text-align: left; }
-    .key-group label { display: block; font-family: 'Cinzel', serif; font-size: 11px; color: #ffd700; margin-bottom: 5px; }
-    .key-link { font-size: 10px; color: #f5e6c8; text-decoration: none; opacity: 0.6; display: block; margin-bottom: 8px; }
+    body { color: white; background: radial-gradient(circle at center, #0d0d12, #020203); min-height: 100vh; font-family: 'Inter', sans-serif; overflow-x: hidden; }
     
-    input, select { width: 100%; padding: 12px; border-radius: 5px; border: 1px solid #333; background: #000; color: #ffd700; margin-bottom: 8px; }
-    button { padding: 12px 25px; background: #2a1b12; color: #ffd700; border: 1px solid #ffd700; cursor: pointer; font-family: 'Cinzel', serif; width: 100%; margin-top: 10px; }
-    button:hover { background: #ffd700; color: #000; }
+    /* 📜 BACKGROUND SCRIPTURE */
+    body::before { content: ""; position: fixed; inset: 0; background: url("https://i.imgur.com/8IuucQZ.png"); opacity: 0.04; animation: moveScript 150s linear infinite; pointer-events: none; z-index: 0; }
+    @keyframes moveScript { to { background-position: 100% 100%; } }
+
+    /* 🧿 UI & GRID */
+    h1 { text-align: center; padding: 40px 20px 10px; font-family: 'Cinzel', serif; color: #f5e6c8; text-shadow: 0 0 25px rgba(255, 180, 80, 0.4); }
+    #stats { text-align: center; padding-bottom: 30px; font-family: 'Cinzel', serif; font-size: 13px; color: #ffd700; opacity: 0.8; }
+    #rows { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; padding: 20px; position: relative; z-index: 2; }
+
+    /* 📚 BOOK BASE */
+    .book { position: relative; width: 180px; height: 270px; border-radius: 12px; cursor: pointer; transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; background: #1a120b; border: 1px solid rgba(255, 215, 0, 0.05); }
+    .book.dead { filter: grayscale(100%) brightness(0.3); }
+    .book.active { border: 2px solid #ffd700; transform: scale(1.08) translateY(-10px); box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); }
+    
+    .book-cover { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s; z-index: 1; }
+    .book.active .book-cover { opacity: 1; }
+    .book-cover img { width: 100%; height: 100%; object-fit: cover; mask-image: radial-gradient(circle, black 60%, transparent 100%); }
+    .book-title { margin-top: 200px; font-family: 'Cinzel', serif; font-size: 12px; text-align: center; color: #f5e6c8; z-index: 5; position: relative; }
+
+    /* 📖 READER OVERLAY */
+    #reader { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; padding: 40px; backdrop-filter: blur(15px); }
+    #readerContent { max-width: 700px; color: #f5e6c8; line-height: 1.8; font-size: 1.2rem; text-align: left; margin-bottom: 30px; font-family: 'Inter', sans-serif; }
+    .reader-title { font-family: 'Cinzel', serif; color: #ffd700; font-size: 2rem; margin-bottom: 20px; }
+    .controls { display: flex; gap: 15px; }
+    button { padding: 12px 25px; background: rgba(255,215,0,0.1); color: #ffd700; border: 1px solid #ffd700; cursor: pointer; font-family: 'Cinzel', serif; }
+    button:hover { background: #ffd700; color: black; }
+
+    /* 📲 ONBOARDING */
+    #onboarding { position: fixed; inset: 0; background: #050507; display: flex; justify-content: center; align-items: center; z-index: 99999; }
+    .onboard-box { background: rgba(20, 15, 10, 0.95); padding: 40px; border-radius: 15px; text-align: center; width: 380px; border: 1px solid #ffd70033; }
+    input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; color: gold; border: 1px solid #333; }
   </style>
 </head>
 <body>
@@ -196,26 +47,22 @@
   <div id="onboarding">
     <div class="onboard-box">
       <h2 style="font-family:'Cinzel'; color:#f5e6c8; margin-bottom:25px;">SYSTEM AWAKENING</h2>
-      
-      <div class="key-group">
-        <label>PRIMARY ENGINE (GEMINI)</label>
-        <a href="https://aistudio.google.com/app/api-keys" target="_blank" class="key-link">↗ Get Gemini Key</a>
-        <input type="password" id="geminiKey" placeholder="Paste Gemini Key">
-      </div>
-
-      <div class="key-group">
-        <label>MODEL PREFERENCE (GROK / MISTRAL / PAID)</label>
-        <select id="modelPreference">
-          <option value="grok">Grok (X.AI)</option>
-          <option value="mistral">Mistral (Free Option)</option>
-          <option value="claude">Claude (Paid Best)</option>
-          <option value="gpt4">GPT-4o (Paid Best)</option>
-        </select>
-        <a href="https://console.x.ai/" id="keyLink" target="_blank" class="key-link">↗ Get Key for GROK</a>
-        <input type="password" id="secondaryKey" placeholder="Paste Model API Key">
-      </div>
-
+      <input type="password" id="geminiKey" placeholder="Paste Gemini Key">
+      <select id="modelPreference">
+        <option value="grok">Grok (X.AI)</option>
+        <option value="mistral">Mistral (Free)</option>
+        <option value="claude">Claude (Paid)</option>
+      </select>
+      <input type="password" id="secondaryKey" placeholder="Secondary API Key">
       <button onclick="startSystem()">INITIALIZE ARCHIVE</button>
+    </div>
+  </div>
+
+  <div id="reader">
+    <div class="reader-title" id="rt">Story Title</div>
+    <div id="readerContent">Loading data from the archive...</div>
+    <div class="controls">
+      <button onclick="closeReader()">CLOSE ARCHIVE</button>
     </div>
   </div>
 
@@ -223,57 +70,76 @@
   <div id="stats">System Status: Awaiting Connection</div>
 
   <div id="rows">
-    <div class="book dead" onclick="activateBook(this)">
-      <div class="placeholder-icon"></div>
-      <div class="book-title">Heavenly Thief</div>
-      <div class="book-cover">
-        <img src="https://i.imgur.com/your-image.jpg" alt="Cover">
-      </div>
     </div>
-  </div>
 
   <script>
-    // Link switcher
-    document.getElementById('modelPreference').addEventListener('change', function() {
-      const links = {
-        grok: "https://console.x.ai/",
-        mistral: "https://console.mistral.ai/",
-        claude: "https://console.anthropic.com/",
-        gpt4: "https://platform.openai.com/api-keys"
-      };
-      const linkEl = document.getElementById('keyLink');
-      linkEl.href = links[this.value];
-      linkEl.innerText = `↗ Get Key for ${this.value.toUpperCase()}`;
-    });
+    const books = [
+      { title: "Vampire System", img: "https://picsum.photos/seed/vampire/180/270", text: "The sky turned blood red as the system initialized. 'Welcome, User 001,' the cold voice whispered. You are the first of your kind." },
+      { title: "Birth of a Demonic Sword", img: "https://picsum.photos/seed/sword/180/270", text: "In a world of immortals, a single blade forged from chaos would change everything. The metal hummed with a dark hunger." },
+      { title: "Legendary Beast Tamer", img: "https://picsum.photos/seed/beast/180/270", text: "The dragon bowed its head. Not out of respect, but out of absolute submission to the one who held the ancient seal." },
+      { title: "My Dragonic System", img: "https://picsum.photos/seed/dragon/180/270", text: "Scales began to form beneath his skin. The power was intoxicating, and the hunger for gold was only the beginning." },
+      { title: "Dragon's Revenge", img: "https://picsum.photos/seed/revenge/180/270", text: "They thought they had killed the last of the brood. They were wrong. And fire was coming for their kingdoms." }
+    ];
 
-    function startSystem() {
-      const gKey = document.getElementById('geminiKey').value;
-      const sKey = document.getElementById('secondaryKey').value;
-      const pref = document.getElementById('modelPreference').value;
+    const container = document.getElementById('rows');
+    
+    // Build the grid
+    function buildGrid() {
+      container.innerHTML = '';
+      books.forEach(b => {
+        const div = document.createElement('div');
+        div.className = 'book dead';
+        div.onclick = () => handleBookClick(div, b);
+        div.innerHTML = `
+          <div class="placeholder-icon"></div>
+          <div class="book-title">${b.title}</div>
+          <div class="book-cover"><img src="${b.img}" alt="Cover"></div>
+        `;
+        container.appendChild(div);
+      });
+    }
 
-      if(gKey && sKey) {
-        localStorage.setItem('gemini_key', gKey);
-        localStorage.setItem('secondary_key', sKey);
-        localStorage.setItem('model_pref', pref);
-        document.getElementById('onboarding').style.display = 'none';
-        document.getElementById('stats').innerText = `SYSTEM: ONLINE | ENGINE: ${pref.toUpperCase()}`;
+    function handleBookClick(el, bookData) {
+      if (el.classList.contains('dead')) {
+        el.classList.remove('dead');
+        el.classList.add('active');
       } else {
-        alert("Both keys are required to initialize.");
+        openReader(bookData);
       }
     }
 
-    function activateBook(el) {
-      el.classList.toggle('dead');
-      el.classList.toggle('active');
+    function openReader(data) {
+      document.getElementById('reader').style.display = 'flex';
+      document.getElementById('rt').innerText = data.title;
+      document.getElementById('readerContent').innerText = data.text;
+      speak(data.text);
+    }
+
+    function closeReader() {
+      document.getElementById('reader').style.display = 'none';
+      window.speechSynthesis.cancel();
+    }
+
+    function speak(text) {
+      window.speechSynthesis.cancel();
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.rate = 0.9;
+      msg.pitch = 0.8; // Lower pitch for a more "system/ancient" vibe
+      window.speechSynthesis.speak(msg);
+    }
+
+    function startSystem() {
+      if(document.getElementById('geminiKey').value) {
+        localStorage.setItem('keys_set', 'true');
+        document.getElementById('onboarding').style.display = 'none';
+        document.getElementById('stats').innerText = "SYSTEM: ONLINE";
+      }
     }
 
     window.onload = () => {
-      if(localStorage.getItem('gemini_key') && localStorage.getItem('secondary_key')) {
-        document.getElementById('onboarding').style.display = 'none';
-        const pref = localStorage.getItem('model_pref') || 'System';
-        document.getElementById('stats').innerText = `SYSTEM: RESTORED | ENGINE: ${pref.toUpperCase()}`;
-      }
-    }
+      buildGrid();
+      if(localStorage.getItem('keys_set')) document.getElementById('onboarding').style.display = 'none';
+    };
   </script>
 </body>
 </html>
