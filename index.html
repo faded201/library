@@ -3,176 +3,224 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xavier AI Library | Awakening</title>
-  <style>
-    /* =========================
-       🌌 THEME & FONTS
-    ========================= */
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400&display=swap');
-    
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      color: white; 
-      background: radial-gradient(circle at center, #0d1218, #020203); 
-      min-height: 100vh; 
-      font-family: 'Inter', sans-serif; 
-      overflow-x: hidden; 
-    }
-    
-    /* 📜 SCRIPTURE OVERLAY */
-    body::before { 
-      content: ""; position: fixed; inset: 0; 
-      background: url("https://i.imgur.com/8IuucQZ.png"); 
-      opacity: 0.05; animation: moveScript 150s linear infinite; 
-      pointer-events: none; z-index: 0; 
-    }
-    @keyframes moveScript { to { background-position: 100% 100%; } }
-
-    /* 🧿 UI ELEMENTS */
-    h1 { text-align: center; padding: 40px 20px 10px; font-family: 'Cinzel', serif; color: #f5e6c8; text-shadow: 0 0 25px rgba(255, 180, 80, 0.4); letter-spacing: 4px; }
-    #stats { text-align: center; padding-bottom: 30px; font-family: 'Cinzel', serif; font-size: 13px; color: #ffd700; letter-spacing: 2px; }
-    #rows { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; padding: 20px; position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; }
-
-    /* 📚 BOOK ARCHIVE */
-    .book { 
-      position: relative; width: 180px; height: 270px; border-radius: 12px; 
-      cursor: pointer; transition: all 0.5s ease; overflow: hidden; 
-      background: #1a120b; border: 1px solid rgba(255, 215, 0, 0.1);
-      display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 15px;
-    }
-    .book.dead { filter: grayscale(100%) brightness(0.3); }
-    .book.active { border: 2px solid #ffd700; transform: scale(1.08) translateY(-10px); box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); }
-    
-    .book-cover { position: absolute; inset: 0; opacity: 0; transition: opacity 1s; z-index: 1; }
-    .book.active .book-cover { opacity: 1; }
-    .book-cover img { width: 100%; height: 100%; object-fit: cover; mask-image: radial-gradient(circle, black 65%, transparent 100%); }
-    .book-title { font-family: 'Cinzel', serif; font-size: 11px; text-align: center; color: #f5e6c8; z-index: 5; text-shadow: 0 2px 4px black; }
-
-    /* 📖 CINEMATIC READER */
-    #reader { 
-      position: fixed; inset: 0; background: rgba(0,0,0,0.98); 
-      display: none; flex-direction: column; align-items: center; justify-content: center; 
-      z-index: 10000; padding: 40px; backdrop-filter: blur(20px); 
-    }
-    #readerContent { max-width: 750px; color: #f5e6c8; line-height: 1.9; font-size: 1.25rem; margin-bottom: 30px; }
-    .reader-title { font-family: 'Cinzel', serif; color: #ffd700; font-size: 2.2rem; margin-bottom: 25px; text-align: center; }
-    button { padding: 12px 30px; background: rgba(255,215,0,0.05); color: #ffd700; border: 1px solid #ffd700; cursor: pointer; font-family: 'Cinzel'; transition: 0.3s; }
-    button:hover { background: #ffd700; color: black; box-shadow: 0 0 20px #ffd70066; }
-
-    /* 📲 ONBOARDING */
-    #onboarding { position: fixed; inset: 0; background: #050507; display: flex; justify-content: center; align-items: center; z-index: 99999; }
-    .onboard-box { background: rgba(20, 15, 10, 0.98); padding: 40px; border-radius: 15px; text-align: center; width: 380px; border: 1px solid #ffd70033; box-shadow: 0 0 60px black; }
-    .key-link { display: block; font-size: 10px; color: #ffd700; text-decoration: none; margin-bottom: 5px; opacity: 0.7; }
-    input, select { width: 100%; padding: 12px; margin: 10px 0; background: #000; color: #ffd700; border: 1px solid #333; font-family: 'Inter'; }
-  </style>
+  <title>Aetheria.ai - Stories Without Boundaries</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="aetheria-styles.css" rel="stylesheet">
 </head>
 <body>
 
-  <div id="onboarding">
-    <div class="onboard-box">
-      <h2 style="font-family:'Cinzel'; color:#f5e6c8; margin-bottom:25px; letter-spacing:3px;">SYSTEM AWAKENING</h2>
-      <a href="https://aistudio.google.com/app/api-keys" target="_blank" class="key-link">↗ Get Gemini Key</a>
-      <input type="password" id="geminiKey" placeholder="Paste Gemini API Key">
+  <!-- Navigation Header -->
+  <nav class="nav-header">
+    <div class="nav-brand">
+      <div class="logo-icon">📖</div>
+      <span class="logo-text">Aetheria<span class="logo-dot">.ai</span></span>
+    </div>
+    <div class="nav-search">
+      <input type="text" placeholder="Search audiobooks, authors, genres..." class="search-input">
+    </div>
+    <div class="nav-actions">
+      <button class="nav-btn stats-btn">📊</button>
+      <button class="nav-btn user-btn">👤</button>
+      <button class="nav-btn menu-btn">☰</button>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    
+    <!-- Home View -->
+    <div id="homeView" class="view home-view">
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <h1 class="hero-title">Stories Without</h1>
+        <h2 class="hero-subtitle">Boundaries</h2>
+        <p class="hero-description">Experience dynamic narration, AI-generated illustrations, and stories that adapt and grow as you listen.</p>
+      </section>
+
+      <!-- Genre Filters -->
+      <section class="genre-filters">
+        <button class="genre-pill active" data-genre="all">All</button>
+        <button class="genre-pill" data-genre="fantasy">Fantasy</button>
+        <button class="genre-pill" data-genre="sci-fi">Sci-Fi</button>
+        <button class="genre-pill" data-genre="mystery">Mystery</button>
+        <button class="genre-pill" data-genre="romance">Romance</button>
+        <button class="genre-pill" data-genre="horror">Horror</button>
+        <button class="genre-pill" data-genre="litrpg">LitRPG</button>
+        <button class="genre-pill" data-genre="cultivation">Cultivation</button>
+      </section>
+
+      <!-- Books Grid -->
+      <section class="books-grid-section">
+        <div class="books-grid" id="booksGrid">
+          <!-- Books rendered dynamically -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Book Detail View -->
+    <div id="bookDetailView" class="view book-detail-view hidden">
+      <button class="back-btn" onclick="showHomeView()">
+        <span class="back-arrow">←</span>
+      </button>
       
-      <select id="modelPreference">
-        <option value="grok">Grok (X.AI)</option>
-        <option value="mistral">Mistral (Free AI)</option>
-        <option value="claude">Claude (Paid Best)</option>
-        <option value="gpt4">GPT-4o (Paid High)</option>
-      </select>
-      <a id="keyLink" href="https://console.x.ai/" target="_blank" class="key-link">↗ Get Key for selected model</a>
-      <input type="password" id="secondaryKey" placeholder="Paste Secondary Key">
-      
-      <button onclick="startSystem()">AWAKEN ARCHIVE</button>
+      <div class="book-detail-content">
+        <div class="book-detail-left">
+          <div class="book-cover-large" id="detailBookCover">
+            <div class="endless-badge">✦ ENDLESS</div>
+          </div>
+        </div>
+        
+        <div class="book-detail-right">
+          <div class="detail-badges">
+            <span class="genre-badge" id="detailGenre">Fantasy</span>
+            <span class="ai-badge">✦ AI Never-Ending</span>
+          </div>
+          
+          <h1 class="detail-title" id="detailTitle">The God Who Stayed</h1>
+          <p class="detail-author" id="detailAuthor">By Small Gods Press</p>
+          
+          <p class="detail-description" id="detailDescription">
+            When the other gods left the world to mortals, one minor deity of small comforts — warmth, companionship, the smell of rain — stayed behind. Millennia later, he's been living as a human and has forgotten what he is, until a young woman starts dreaming about his divine life.
+          </p>
+          
+          <div class="detail-actions">
+            <button class="start-listening-btn" onclick="startListening()">
+              <span class="play-icon">▶</span>
+              Start Listening
+            </button>
+          </div>
+          
+          <div class="detail-meta">
+            <span class="meta-item">
+              <span class="meta-icon">📖</span>
+              <span id="detailChapters">1 Chapters</span>
+            </span>
+            <span class="meta-item">
+              <span class="meta-icon">🕐</span>
+              <span>Updated Recently</span>
+            </span>
+            <span class="meta-item">
+              <span class="meta-icon">🎙️</span>
+              <span id="detailVoice">Kokoro Voice</span>
+            </span>
+          </div>
+
+          <!-- Chapter List -->
+          <div class="chapter-list" id="chapterList">
+            <h3>Episodes</h3>
+            <!-- Chapters rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audio Player View -->
+    <div id="playerView" class="view player-view hidden">
+      <div class="player-header">
+        <button class="back-btn" onclick="showBookDetail()">
+          <span class="back-arrow">←</span>
+        </button>
+        <div class="player-header-info">
+          <h3 class="player-book-title" id="playerBookTitle">The God Who Stayed</h3>
+          <span class="player-chapter-label" id="playerChapterLabel">CHAPTER 1</span>
+        </div>
+      </div>
+
+      <div class="player-content">
+        <div class="player-left">
+          <div class="scene-image-container">
+            <img id="playerSceneImage" src="" alt="Story Scene" class="player-scene-image">
+          </div>
+        </div>
+
+        <div class="player-right">
+          <h2 class="player-chapter-title" id="playerChapterTitle">Small Things</h2>
+          <div class="player-text-content" id="playerTextContent">
+            <!-- Story text rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="player-controls-bar">
+        <div class="progress-section">
+          <span class="time-current" id="currentTime">00:00</span>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+            <input type="range" class="progress-slider" id="progressSlider" min="0" max="100" value="0">
+          </div>
+          <span class="time-total" id="totalTime">23:00</span>
+        </div>
+
+        <div class="controls-section">
+          <button class="control-btn" id="prevBtn">⏮</button>
+          <button class="control-btn play-btn" id="playPauseBtn">
+            <span class="play-icon">▶</span>
+          </button>
+          <button class="control-btn" id="nextBtn">⏭</button>
+        </div>
+
+        <div class="settings-section">
+          <button class="control-btn" id="speedBtn">1x</button>
+          <button class="control-btn" id="settingsBtn">⚙</button>
+        </div>
+
+        <audio id="audioPlayer" style="display: none;"></audio>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- API Settings Button (Floating) -->
+  <button class="api-settings-fab" onclick="toggleAPISettings()">⚙️</button>
+
+  <!-- API Settings Panel -->
+  <div id="apiSettingsPanel" class="api-panel hidden">
+    <div class="api-panel-backdrop" onclick="toggleAPISettings()"></div>
+    <div class="api-panel-content">
+      <h3>🔑 API Configuration</h3>
+      <div class="api-section">
+        <h4>AI Models</h4>
+        <div class="api-input-group">
+          <label>Gemini API Key</label>
+          <input type="password" id="geminiKey" placeholder="Enter key">
+        </div>
+        <div class="api-input-group">
+          <label>Grok API Key</label>
+          <input type="password" id="grokKey" placeholder="Enter key">
+        </div>
+        <div class="api-input-group">
+          <label>TTS.ai API Key</label>
+          <input type="password" id="ttsaiApiKey" placeholder="Enter key">
+        </div>
+      </div>
+      <div class="api-section">
+        <h4>Voice Settings</h4>
+        <div class="api-input-group">
+          <label>TTS Engine</label>
+          <select id="ttsEngine">
+            <option value="kokoro">Kokoro</option>
+            <option value="orpheus">Orpheus</option>
+            <option value="ttsai">TTS.ai</option>
+          </select>
+        </div>
+        <div class="api-input-group">
+          <label>Narrator</label>
+          <select id="narratorGender">
+            <option value="male">Male (Michael)</option>
+            <option value="female">Female (Emma/Bella)</option>
+          </select>
+        </div>
+      </div>
+      <div class="api-actions">
+        <button class="save-btn" onclick="saveAPIKeys()">Save</button>
+        <button class="close-btn" onclick="toggleAPISettings()">Cancel</button>
+      </div>
     </div>
   </div>
 
-  <div id="reader">
-    <div class="reader-title" id="rt">Archive Title</div>
-    <div id="readerContent">Archival transmission in progress...</div>
-    <button onclick="closeReader()">CLOSE TRANSMISSION</button>
-  </div>
+  <!-- Scripts -->
+  <script src="books-database.js"></script>
+  <script src="aetheria-script.js"></script>
 
-  <h1>Xavier AI Library</h1>
-  <div id="stats">STATUS: CONNECTING...</div>
-
-  <div id="rows"></div>
-
-  <script>
-    // 📚 YOUR CORE BOOKS
-    const coreBooks = [
-      { title: "Vampire System", img: "https://picsum.photos/seed/vamp1/180/270", text: "The system initialized. Blood points: 10. Hunger: Level 1. 'Do you wish to evolve?' the interface pulsed in his vision." },
-      { title: "Birth of a Demonic Sword", img: "https://picsum.photos/seed/sword2/180/270", text: "A single blade, forged from the essence of a dying star. It didn't just cut; it consumed the soul of anything it touched." },
-      { title: "Legendary Beast Tamer", img: "https://picsum.photos/seed/beast3/180/270", text: "The ancient dragon lowered its head. The pact was sealed. From this day, the world would know the true king of beasts." },
-      { title: "My Dragonic System", img: "https://picsum.photos/seed/drag4/180/270", text: "Scales began to coat his arms. The Draconic lineage had awakened. His first quest: Reclaim the stolen hoard of the Crimson King." },
-      { title: "Dragon's Revenge", img: "https://picsum.photos/seed/rev5/180/270", text: "They betrayed the clan. They burned the nests. But the fire they started would be their own funeral pyre." },
-      { title: "Heavenly Thief", img: "https://picsum.photos/seed/thief6/180/270", text: "Even the gods could be robbed. And tonight, the moon would witness the greatest heist in the history of the upper realms." }
-    ];
-
-    const rowEl = document.getElementById('rows');
-
-    // 🏗️ BUILD THE 178 GRID
-    function buildArchive() {
-      rowEl.innerHTML = '';
-      // Inject Core Books
-      coreBooks.forEach(b => createBook(b));
-      // Inject Placeholder Archives
-      for (let i = 1; i <= 172; i++) {
-        createBook({ title: `Archive #${i + 6}`, img: `https://picsum.photos/seed/arch${i}/180/270`, text: "Encrypted archival data. Level 5 clearance required for decryption." });
-      }
-    }
-
-    function createBook(data) {
-      const div = document.createElement('div');
-      div.className = 'book dead';
-      div.onclick = () => {
-        if(div.classList.contains('dead')) {
-          div.classList.replace('dead', 'active');
-        } else {
-          openReader(data);
-        }
-      };
-      div.innerHTML = `
-        <div class="book-title">${data.title}</div>
-        <div class="book-cover"><img src="${data.img}" alt="Cover"></div>
-      `;
-      rowEl.appendChild(div);
-    }
-
-    function openReader(data) {
-      document.getElementById('reader').style.display = 'flex';
-      document.getElementById('rt').innerText = data.title;
-      document.getElementById('readerContent').innerText = data.text;
-      narrate(data.text);
-    }
-
-    function closeReader() {
-      document.getElementById('reader').style.display = 'none';
-      window.speechSynthesis.cancel();
-    }
-
-    function narrate(text) {
-      window.speechSynthesis.cancel();
-      const msg = new SpeechSynthesisUtterance(text);
-      msg.rate = 0.85; msg.pitch = 0.7; // Deep cinematic tone
-      window.speechSynthesis.speak(msg);
-    }
-
-    function startSystem() {
-      if(document.getElementById('geminiKey').value) {
-        localStorage.setItem('xavier_init', 'true');
-        document.getElementById('onboarding').style.display = 'none';
-        document.getElementById('stats').innerText = "SYSTEM: ONLINE | ARCHIVE UNLOCKED";
-      }
-    }
-
-    window.onload = () => {
-      buildArchive();
-      if(localStorage.getItem('xavier_init')) {
-        document.getElementById('onboarding').style.display = 'none';
-        document.getElementById('stats').innerText = "SYSTEM: RESTORED";
-      }
-    };
-  </script>
 </body>
 </html>

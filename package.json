@@ -1,0 +1,51 @@
+{
+  "name": "xavier-os-audiobook-universe",
+  "version": "1.0.0",
+  "description": "Never-ending AI-generated audiobook universe with Quinn Talen saga",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve . -p 3000",
+    "build": "echo 'Build complete - static files ready'",
+    "start": "npx serve . -p 3000",
+    "type-check": "tsc --noEmit --strict",
+    "lint": "eslint *.js *.ts",
+    "test": "echo 'Tests not implemented yet'"
+  },
+  "keywords": [
+    "audiobook",
+    "ai",
+    "storytelling",
+    "react",
+    "typescript",
+    "pwa"
+  ],
+  "author": "faded201",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^4.9.5",
+    "serve": "^14.2.0",
+    "eslint": "^8.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
