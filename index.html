@@ -6,221 +6,23 @@
   <title>Aetheria.ai - Stories Without Boundaries</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link href="aetheria-styles.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  
+  <!-- React and Babel for in-browser JSX transpilation -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
 
-  <!-- Navigation Header -->
-  <nav class="nav-header">
-    <div class="nav-brand">
-      <div class="logo-icon">📖</div>
-      <span class="logo-text">Aetheria<span class="logo-dot">.ai</span></span>
-    </div>
-    <div class="nav-search">
-      <input type="text" placeholder="Search audiobooks, authors, genres..." class="search-input">
-    </div>
-    <div class="nav-actions">
-      <button class="nav-btn stats-btn">📊</button>
-      <button class="nav-btn user-btn">👤</button>
-      <button class="nav-btn menu-btn">☰</button>
-    </div>
-  </nav>
-
-  <!-- Main Content Area -->
-  <main class="main-content">
-    
-    <!-- Home View -->
-    <div id="homeView" class="view home-view">
-      <!-- Hero Section -->
-      <section class="hero-section">
-        <h1 class="hero-title">Stories Without</h1>
-        <h2 class="hero-subtitle">Boundaries</h2>
-        <p class="hero-description">Experience dynamic narration, AI-generated illustrations, and stories that adapt and grow as you listen.</p>
-      </section>
-
-      <!-- Genre Filters -->
-      <section class="genre-filters">
-        <button class="genre-pill active" data-genre="all">All</button>
-        <button class="genre-pill" data-genre="fantasy">Fantasy</button>
-        <button class="genre-pill" data-genre="sci-fi">Sci-Fi</button>
-        <button class="genre-pill" data-genre="mystery">Mystery</button>
-        <button class="genre-pill" data-genre="romance">Romance</button>
-        <button class="genre-pill" data-genre="horror">Horror</button>
-        <button class="genre-pill" data-genre="litrpg">LitRPG</button>
-        <button class="genre-pill" data-genre="cultivation">Cultivation</button>
-      </section>
-
-      <!-- Books Grid -->
-      <section class="books-grid-section">
-        <div class="books-grid" id="booksGrid">
-          <!-- Books rendered dynamically -->
-        </div>
-      </section>
-    </div>
-
-    <!-- Book Detail View -->
-    <div id="bookDetailView" class="view book-detail-view hidden">
-      <button class="back-btn" onclick="showHomeView()">
-        <span class="back-arrow">←</span>
-      </button>
-      
-      <div class="book-detail-content">
-        <div class="book-detail-left">
-          <div class="book-cover-large" id="detailBookCover">
-            <div class="endless-badge">✦ ENDLESS</div>
-          </div>
-        </div>
-        
-        <div class="book-detail-right">
-          <div class="detail-badges">
-            <span class="genre-badge" id="detailGenre">Fantasy</span>
-            <span class="ai-badge">✦ AI Never-Ending</span>
-          </div>
-          
-          <h1 class="detail-title" id="detailTitle">The God Who Stayed</h1>
-          <p class="detail-author" id="detailAuthor">By Small Gods Press</p>
-          
-          <p class="detail-description" id="detailDescription">
-            When the other gods left the world to mortals, one minor deity of small comforts — warmth, companionship, the smell of rain — stayed behind. Millennia later, he's been living as a human and has forgotten what he is, until a young woman starts dreaming about his divine life.
-          </p>
-          
-          <div class="detail-actions">
-            <button class="start-listening-btn" onclick="startListening()">
-              <span class="play-icon">▶</span>
-              Start Listening
-            </button>
-          </div>
-          
-          <div class="detail-meta">
-            <span class="meta-item">
-              <span class="meta-icon">📖</span>
-              <span id="detailChapters">1 Chapters</span>
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">🕐</span>
-              <span>Updated Recently</span>
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">🎙️</span>
-              <span id="detailVoice">Kokoro Voice</span>
-            </span>
-          </div>
-
-          <!-- Chapter List -->
-          <div class="chapter-list" id="chapterList">
-            <h3>Episodes</h3>
-            <!-- Chapters rendered dynamically -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Audio Player View -->
-    <div id="playerView" class="view player-view hidden">
-      <div class="player-header">
-        <button class="back-btn" onclick="showBookDetail()">
-          <span class="back-arrow">←</span>
-        </button>
-        <div class="player-header-info">
-          <h3 class="player-book-title" id="playerBookTitle">The God Who Stayed</h3>
-          <span class="player-chapter-label" id="playerChapterLabel">CHAPTER 1</span>
-        </div>
-      </div>
-
-      <div class="player-content">
-        <div class="player-left">
-          <div class="scene-image-container">
-            <img id="playerSceneImage" src="" alt="Story Scene" class="player-scene-image">
-          </div>
-        </div>
-
-        <div class="player-right">
-          <h2 class="player-chapter-title" id="playerChapterTitle">Small Things</h2>
-          <div class="player-text-content" id="playerTextContent">
-            <!-- Story text rendered here -->
-          </div>
-        </div>
-      </div>
-
-      <div class="player-controls-bar">
-        <div class="progress-section">
-          <span class="time-current" id="currentTime">00:00</span>
-          <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-            <input type="range" class="progress-slider" id="progressSlider" min="0" max="100" value="0">
-          </div>
-          <span class="time-total" id="totalTime">23:00</span>
-        </div>
-
-        <div class="controls-section">
-          <button class="control-btn" id="prevBtn">⏮</button>
-          <button class="control-btn play-btn" id="playPauseBtn">
-            <span class="play-icon">▶</span>
-          </button>
-          <button class="control-btn" id="nextBtn">⏭</button>
-        </div>
-
-        <div class="settings-section">
-          <button class="control-btn" id="speedBtn">1x</button>
-          <button class="control-btn" id="settingsBtn">⚙</button>
-        </div>
-
-        <audio id="audioPlayer" style="display: none;"></audio>
-      </div>
-    </div>
-
-  </main>
-
-  <!-- API Settings Button (Floating) -->
-  <button class="api-settings-fab" onclick="toggleAPISettings()">⚙️</button>
-
-  <!-- API Settings Panel -->
-  <div id="apiSettingsPanel" class="api-panel hidden">
-    <div class="api-panel-backdrop" onclick="toggleAPISettings()"></div>
-    <div class="api-panel-content">
-      <h3>🔑 API Configuration</h3>
-      <div class="api-section">
-        <h4>AI Models</h4>
-        <div class="api-input-group">
-          <label>Gemini API Key</label>
-          <input type="password" id="geminiKey" placeholder="Enter key">
-        </div>
-        <div class="api-input-group">
-          <label>Grok API Key</label>
-          <input type="password" id="grokKey" placeholder="Enter key">
-        </div>
-        <div class="api-input-group">
-          <label>TTS.ai API Key</label>
-          <input type="password" id="ttsaiApiKey" placeholder="Enter key">
-        </div>
-      </div>
-      <div class="api-section">
-        <h4>Voice Settings</h4>
-        <div class="api-input-group">
-          <label>TTS Engine</label>
-          <select id="ttsEngine">
-            <option value="kokoro">Kokoro</option>
-            <option value="orpheus">Orpheus</option>
-            <option value="ttsai">TTS.ai</option>
-          </select>
-        </div>
-        <div class="api-input-group">
-          <label>Narrator</label>
-          <select id="narratorGender">
-            <option value="male">Male (Michael)</option>
-            <option value="female">Female (Emma/Bella)</option>
-          </select>
-        </div>
-      </div>
-      <div class="api-actions">
-        <button class="save-btn" onclick="saveAPIKeys()">Save</button>
-        <button class="close-btn" onclick="toggleAPISettings()">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
+  <!-- The mounting point for the Xavier OS React App -->
+  <div id="root"></div>
+  
+  <!-- Global Books Database -->
   <script src="books-database.js"></script>
-  <script src="aetheria-script.js"></script>
+  
+  <!-- Our React application -->
+  <script type="text/babel" src="aetheria-script.js"></script>
 
 </body>
 </html>
