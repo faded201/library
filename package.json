@@ -2,10 +2,11 @@
   "name": "xavier-os-audiobook-universe",
   "version": "1.0.0",
   "description": "Never-ending AI-generated audiobook universe with Quinn Talen saga",
-  "main": "index.html",
+  "type": "module",
   "scripts": {
-    "start": "npx serve . -p 3000",
-    "build": "echo 'Static HTML/JS Site - No build required'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "audiobook",
@@ -17,8 +18,13 @@
   ],
   "author": "faded201",
   "license": "UNLICENSED",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
   "devDependencies": {
-    "serve": "^14.2.0"
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.1.4"
   },
   "browserslist": {
     "production": [

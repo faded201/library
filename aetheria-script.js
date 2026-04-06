@@ -1,8 +1,10 @@
+import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom/client';
+
 /**
  * AETHERIA.AI - React Re-Design
  * Matches reference screenshots exactly, converted to React
  */
-const { useState, useEffect, useRef } = React;
 
 const AetheriaApp = () => {
   const [apiKeys, setApiKeys] = useState({
