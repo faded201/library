@@ -792,26 +792,3 @@ if (typeof window !== 'undefined') {
 }
 
 export default XavierOS;
-    boxShadow: '0 0 10px rgba(0, 255, 204, 0.1)', cursor: 'pointer', transition: 'all 0.3s ease' 
-  },
-  unlockToast: { position: 'fixed', top: '80px', right: '20px', padding: '15px 25px', backgroundColor: 'rgba(10,10,15,0.95)', borderLeft: '4px solid', borderRadius: '4px', zIndex: 9999, boxShadow: '0 4px 15px rgba(0,0,0,0.8)', transition: 'all 0.3s ease' },
-  paymentModalBackdrop: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(5px)' },
-  paymentModalContent: { backgroundColor: '#1a1a24', padding: '30px', borderRadius: '12px', width: '350px', textAlign: 'center', border: '1px solid #333', boxShadow: '0 10px 30px rgba(0,0,0,0.8)' },
-  stripeBtn: { backgroundColor: '#635bff', color: '#fff', padding: '12px', width: '100%', borderRadius: '4px', border: 'none', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' },
-  divider: { borderBottom: '1px solid #444', position: 'relative', margin: '20px 0' },
-  dividerText: { position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#1a1a24', padding: '0 10px', color: '#888', fontSize: '0.8rem' },
-  cancelBtn: { backgroundColor: 'transparent', color: '#ff4d4d', padding: '10px', width: '100%', border: '1px solid #ff4d4d', borderRadius: '4px', marginTop: '15px', cursor: 'pointer' },
-  cardGrid: { display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center', padding: '20px 0' },
-  ledgerContainer: { backgroundColor: '#111', borderRadius: '8px', padding: '15px', border: '1px solid #333', overflowX: 'auto' },
-  ledgerTable: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
-  ledgerTh: { padding: '10px', borderBottom: '1px solid #444', color: '#888', fontWeight: 'normal', fontSize: '0.9rem' },
-  ledgerTd: { padding: '10px', borderBottom: '1px solid #222', fontSize: '0.95rem' }
-};
-
-// Required to make the component available to the rest of your app
-if (typeof window !== 'undefined') {
-  const rootElement = document.getElementById('root');
-  if (rootElement) ReactDOM.createRoot(rootElement).render(<XavierOS />);
-}
-
-export default XavierOS;
