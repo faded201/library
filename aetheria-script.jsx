@@ -40,6 +40,7 @@ const XavierOS = () => {
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
   const [playlistIndex, setPlaylistIndex] = useState(0);
+  const [apiUsage, setApiUsage] = useState(typeof window !== 'undefined' ? parseInt(localStorage.getItem('api_usage') || '0') : 0);
   
   const audioRef = useRef(null);
   const bgmRef = useRef(null);
@@ -61,6 +62,15 @@ const XavierOS = () => {
       sfx.volume = 0.4;
       sfx.play();
     } catch(e) {}
+  };
+
+  // Track API Calls
+  const logApiCall = () => {
+    setApiUsage(prev => {
+      const newVal = prev + 1;
+      localStorage.setItem('api_usage', newVal.toString());
+      return newVal;
+    });
   };
 
   // Global Books Database
@@ -196,6 +206,7 @@ const XavierOS = () => {
     // Generate images that actually follow the storyline based on the text chunk!
     const imagePrompt = `Epic cinematic scene from ${bookData.title}, featuring ${getProtagonist(bookData)}. Action happening: ${chunkText.substring(0, 150)}. Highly detailed digital art, dramatic lighting`;
     setCurrentImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&nologo=true`);
+    logApiCall(); // Log image generation request
 
     // Audio TTS Fetch
     const ttsEngine = localStorage.getItem('active_tts') || 'streamelements';
@@ -205,6 +216,7 @@ const XavierOS = () => {
     let url = `https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(chunkText)}`;
     
     if (ttsEngine === 'google' && googleKey) {
+      logApiCall(); // Log Google TTS request
       try {
         const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleKey}`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -213,6 +225,7 @@ const XavierOS = () => {
         if (res.ok) { const d = await res.json(); url = "data:audio/mp3;base64," + d.audioContent; }
       } catch(e) {}
     } else if (ttsEngine === 'noiz' && noizKey) {
+      logApiCall(); // Log Noiz TTS request
       try {
         const res = await fetch('https://api.noiz.ai/v1/audio/speech', {
           method: 'POST', headers: { 'Authorization': `Bearer ${noizKey}`, 'Content-Type': 'application/json' },
@@ -234,7 +247,6 @@ const XavierOS = () => {
     setCurrentImage(null);
     setStoryContent(null);
     setProgress(0);
-    errorCount.current = 0;
 
     try {
       const weights = { Mythical: 5, Legendary: 4, Epic: 3, Rare: 2, Common: 1 };
@@ -247,6 +259,7 @@ const XavierOS = () => {
       let generatedTitle = `Episode ${episodeNum}`;
       
       try {
+        logApiCall(); // Log AI Story generation request
         const aiRes = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -317,6 +330,7 @@ const XavierOS = () => {
       if(bgmRef.current) bgmRef.current.pause();
       setIsPlaying(false); 
     } else { 
+      errorCount.current = 0; // Reset error tracker on manual play
       audioRef.current.play(); 
       if(bgmRef.current) bgmRef.current.play();
       setIsPlaying(true); 
@@ -324,7 +338,9 @@ const XavierOS = () => {
   };
   
   const handleAudioEnded = () => {
-     if (storyContent && storyContent.chunks && playlistIndex < storyContent.chunks.length - 1) {
+     if (!storyContent || !storyContent.chunks) return; // Prevent async state loop crashes
+
+     if (playlistIndex < storyContent.chunks.length - 1) {
        const nextIdx = playlistIndex + 1;
        setPlaylistIndex(nextIdx);
        playChunk(storyContent.chunks, nextIdx, selectedBook);
@@ -340,6 +356,7 @@ const XavierOS = () => {
      if (errorCount.current >= 3) {
        setError("Voice API connection lost or rate-limited. Playback paused.");
        setIsPlaying(false);
+       if (audioRef.current) audioRef.current.pause();
        if (bgmRef.current) bgmRef.current.pause();
        return;
      }
@@ -375,6 +392,15 @@ const XavierOS = () => {
           <h4 style={{margin: '0 0 5px 0', color: latestUnlock.color, textTransform: 'uppercase'}}>✨ {latestUnlock.rarity} Unlocked! ✨</h4>
           <p style={{margin: 0, fontSize: '0.9rem'}}>Acquired <strong>{latestUnlock.name}</strong></p>
           <p style={{margin: '5px 0 0 0', fontSize: '0.75rem', opacity: 0.8}}>Book: {latestUnlock.bookSource}</p>
+        </div>
+      )}
+      
+      {/* API Usage Warning Toast */}
+      {apiUsage >= 150 && (
+        <div style={{...styles.unlockToast, top: latestUnlock ? '170px' : '80px', borderColor: '#ffaa00'}}>
+          <h4 style={{margin: '0 0 5px 0', color: '#ffaa00', textTransform: 'uppercase'}}>⚠️ API Usage High</h4>
+          <p style={{margin: 0, fontSize: '0.9rem'}}>You've made {apiUsage} API requests. You may hit rate limits soon.</p>
+          <button onClick={() => {setApiUsage(0); localStorage.setItem('api_usage', '0')}} style={{marginTop: '8px', background: 'transparent', border: '1px solid #ffaa00', color: '#ffaa00', borderRadius: '4px', cursor: 'pointer', fontSize: '0.75rem', padding: '4px 8px'}}>Reset Counter</button>
         </div>
       )}
 
@@ -455,6 +481,17 @@ const XavierOS = () => {
                 <input type="password" value={apiKeys.noiz} onChange={e => setApiKeys({...apiKeys, noiz: e.target.value})} placeholder="Enter key" />
               </div>
             </div>
+          <div className="api-section">
+            <h4 style={{ color: '#ff4d4d', marginTop: 0 }}>Danger Zone</h4>
+            <button style={{ backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }} onClick={() => {
+              if (window.confirm("Are you sure you want to wipe all XP, Cards, and Aetherium to fix the glitch?")) {
+                setInventory({ xp: 0, level: 1, cards: [], aetherium: 0, aetheriumHistory: [] });
+                alert("Inventory and progress wiped clean.");
+              }
+            }}>
+              Wipe Glitched Inventory
+            </button>
+          </div>
             <div className="api-actions">
               <button className="save-btn" onClick={() => {
                 localStorage.setItem('active_ai', activeAI);
@@ -565,14 +602,14 @@ const XavierOS = () => {
                 <p className="detail-author">By AI Generated</p>
                 <p className="detail-description">{selectedBook.description}</p>
                 <div className="detail-actions">
-                  <button className="start-listening-btn" onClick={() => { setViewMode('player'); awakenBook(selectedBook, 1); }}>
+                <button className="start-listening-btn" onClick={() => { errorCount.current = 0; setViewMode('player'); awakenBook(selectedBook, 1); }}>
                     <span className="play-icon">▶</span> Start Listening
                   </button>
                 </div>
                 <div className="chapter-list">
                   <h3>Episodes</h3>
                   {[1,2,3,4,5].map(ep => (
-                    <div key={ep} className="chapter-item" onClick={() => { setViewMode('player'); awakenBook(selectedBook, ep); }}>
+                  <div key={ep} className="chapter-item" onClick={() => { errorCount.current = 0; setViewMode('player'); awakenBook(selectedBook, ep); }}>
                       <span className="chapter-number">EP {ep}</span>
                       <span className="chapter-title">Episode {ep}</span>
                       <span className="chapter-duration">23:00</span>
@@ -635,11 +672,11 @@ const XavierOS = () => {
               </div>
 
               <div className="controls-section">
-                <button className="control-btn" onClick={() => awakenBook(selectedBook, Math.max(1, currentEpisode - 1))}>⏮</button>
+              <button className="control-btn" onClick={() => { errorCount.current = 0; awakenBook(selectedBook, Math.max(1, currentEpisode - 1)); }}>⏮</button>
                 <button className="control-btn play-btn" onClick={togglePlay}>
                   <span className="play-icon">{isPlaying ? '⏸' : '▶'}</span>
                 </button>
-                <button className="control-btn" onClick={() => awakenBook(selectedBook, currentEpisode + 1)}>⏭</button>
+              <button className="control-btn" onClick={() => { errorCount.current = 0; awakenBook(selectedBook, currentEpisode + 1); }}>⏭</button>
               </div>
 
               <div className="settings-section">
@@ -732,6 +769,29 @@ const styles = {
   wallet: {
     display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0, 255, 204, 0.05)', 
     padding: '8px 16px', borderRadius: '20px', border: '1px solid rgba(0, 255, 204, 0.2)', 
+    boxShadow: '0 0 10px rgba(0, 255, 204, 0.1)', cursor: 'pointer', transition: 'all 0.3s ease' 
+  },
+  unlockToast: { position: 'fixed', top: '80px', right: '20px', padding: '15px 25px', backgroundColor: 'rgba(10,10,15,0.95)', borderLeft: '4px solid', borderRadius: '4px', zIndex: 9999, boxShadow: '0 4px 15px rgba(0,0,0,0.8)', transition: 'all 0.3s ease' },
+  paymentModalBackdrop: { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(5px)' },
+  paymentModalContent: { backgroundColor: '#1a1a24', padding: '30px', borderRadius: '12px', width: '350px', textAlign: 'center', border: '1px solid #333', boxShadow: '0 10px 30px rgba(0,0,0,0.8)' },
+  stripeBtn: { backgroundColor: '#635bff', color: '#fff', padding: '12px', width: '100%', borderRadius: '4px', border: 'none', fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer', transition: '0.2s' },
+  divider: { borderBottom: '1px solid #444', position: 'relative', margin: '20px 0' },
+  dividerText: { position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#1a1a24', padding: '0 10px', color: '#888', fontSize: '0.8rem' },
+  cancelBtn: { backgroundColor: 'transparent', color: '#ff4d4d', padding: '10px', width: '100%', border: '1px solid #ff4d4d', borderRadius: '4px', marginTop: '15px', cursor: 'pointer' },
+  cardGrid: { display: 'flex', gap: '15px', flexWrap: 'wrap', justifyContent: 'center', padding: '20px 0' },
+  ledgerContainer: { backgroundColor: '#111', borderRadius: '8px', padding: '15px', border: '1px solid #333', overflowX: 'auto' },
+  ledgerTable: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' },
+  ledgerTh: { padding: '10px', borderBottom: '1px solid #444', color: '#888', fontWeight: 'normal', fontSize: '0.9rem' },
+  ledgerTd: { padding: '10px', borderBottom: '1px solid #222', fontSize: '0.95rem' }
+};
+
+// Required to make the component available to the rest of your app
+if (typeof window !== 'undefined') {
+  const rootElement = document.getElementById('root');
+  if (rootElement) ReactDOM.createRoot(rootElement).render(<XavierOS />);
+}
+
+export default XavierOS;
     boxShadow: '0 0 10px rgba(0, 255, 204, 0.1)', cursor: 'pointer', transition: 'all 0.3s ease' 
   },
   unlockToast: { position: 'fixed', top: '80px', right: '20px', padding: '15px 25px', backgroundColor: 'rgba(10,10,15,0.95)', borderLeft: '4px solid', borderRadius: '4px', zIndex: 9999, boxShadow: '0 4px 15px rgba(0,0,0,0.8)', transition: 'all 0.3s ease' },
