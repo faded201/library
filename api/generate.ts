@@ -111,10 +111,11 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { series = "vampire-system", chapterNumber = 1, aiModel = "gemini" } = req.body as StoryRequest;
+    const { series = "vampire-system", chapterNumber = 1, aiModel = "gemini", apiKey } = req.body as any;
     
     const storyConfig = storyTemplates[series as keyof typeof storyTemplates] || storyTemplates["vampire-system"];
     const selectedAI = aiModels[aiModel as keyof typeof aiModels] || aiModels.gemini;
+    const activeKey = apiKey || selectedAI.apiKey;
     
     // Initialize or retrieve character memory
     let characterMemory = characterMemoryStore[series];
@@ -123,27 +124,64 @@ export default async function handler(req: any, res: any) {
       characterMemoryStore[series] = characterMemory;
     }
     
-    // Generate story content with character memory
-    const template = storyConfig.templates[Math.floor(Math.random() * storyConfig.templates.length)];
+    // STRICT STORYTELLING PROMPT TO PREVENT RAMBLING
+    const prompt = `You are a master audiobook storyteller writing Chapter ${chapterNumber} of the series "${storyConfig.series}".
+
+CRITICAL RULES FOR GENERATION:
+1. 100% STORYLINE ACCURACY: You must strictly adhere to the protagonist (${storyConfig.protagonist}), their traits (${characterMemory.traits.personality}), and the established lore.
+2. NO RAMBLING OR FILLER: Keep the narrative completely focused on plot progression and meaningful action. Do NOT add irrelevant philosophical filler, repetitive inner monologues, or disjointed rambling.
+3. PACING: Drive the story forward. Actions should have immediate consequences.
+4. FORMATTING: Output ONLY the story text. No markdown, no asterisks, no titles, and no meta-commentary like "Here is the chapter".
+
+Current Character Goals: ${characterMemory.traits.goals}
+Current World State: ${JSON.stringify(characterMemory.worldState)}
+Previous Events Memory: ${characterMemory.events.join(" | ")}
+
+Write the next chapter now, continuing seamlessly.`;
+
+    let chapter = "The shadows lengthened, but the true story was yet to be written...";
     
-    // Generate dynamic content with character memory integration
-    const replacements = {
-      points: Math.floor(Math.random() * 1000) + 100,
-      level: chapterNumber,
-      ability: getCharacterAbility(characterMemory, chapterNumber),
-      discovery: getCharacterDiscovery(characterMemory, chapterNumber),
-      power: Math.floor(Math.random() * 100) + chapterNumber * 10,
-      dragonType: getCharacterDragonType(characterMemory, chapterNumber)
-    };
-    
-    let chapter = template;
-    for (const [key, value] of Object.entries(replacements)) {
-      chapter = chapter.replace(new RegExp(`{${key}}`, 'g'), String(value));
+    // ACTUAL AI GENERATION CALL
+    if (activeKey) {
+      try {
+        if (aiModel === 'gemini') {
+          // Using the smarter Gemini 1.5 Pro model with a strict 0.5 temperature
+          const res = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=\${activeKey}\`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.5 } })
+          });
+          const data = await res.json();
+          if (data.candidates) chapter = data.candidates[0].content.parts[0].text;
+        } else if (['grok', 'mistral', 'gpt4'].includes(aiModel)) {
+          const res = await fetch(selectedAI.endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${activeKey}\` },
+            body: JSON.stringify({
+              model: aiModel === 'gpt4' ? 'gpt-4-turbo' : (aiModel === 'mistral' ? 'mistral-large-latest' : 'grok-beta'),
+              messages: [{ role: 'system', content: 'You are a precise, focused storyteller. Do not ramble.' }, { role: 'user', content: prompt }],
+              temperature: 0.5
+            })
+          });
+          const data = await res.json();
+          if (data.choices) chapter = data.choices[0].message.content;
+        } else if (['claude', 'sonnet'].includes(aiModel)) {
+          const res = await fetch(selectedAI.endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': activeKey, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({
+              model: aiModel === 'sonnet' ? 'claude-3-sonnet-20240229' : 'claude-3-opus-20240229',
+              max_tokens: 3000, temperature: 0.5,
+              messages: [{ role: 'user', content: prompt }]
+            })
+          });
+          const data = await res.json();
+          if (data.content) chapter = data.content[0].text;
+        }
+      } catch(e) {
+        console.error("AI API Fetch Error:", e);
+      }
     }
-    
-    // Add more content with character memory
-    const additionalContent = generateAdditionalContent(series, chapterNumber, characterMemory, selectedAI);
-    chapter += "\n\n" + additionalContent;
     
     // Update character memory based on new events
     updateCharacterMemory(characterMemory, chapter, chapterNumber);
@@ -271,4 +309,3 @@ function updateCharacterMemory(memory: CharacterMemory, chapter: string, chapter
     memory.events = memory.events.slice(-10);
   }
 }
-

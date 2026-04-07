@@ -9,6 +9,7 @@ const XavierOS = () => {
   const [currentEpisode, setCurrentEpisode] = useState(1);
   const [apiSettingsOpen, setApiSettingsOpen] = useState(false);
   const [activeAI, setActiveAI] = useState(localStorage.getItem('active_ai') || 'gemini');
+  const [activeTTS, setActiveTTS] = useState(localStorage.getItem('active_tts') || 'streamelements');
   const [apiKeys, setApiKeys] = useState({
     gemini: localStorage.getItem('gemini_api_key') || '',
     grok: localStorage.getItem('grok_api_key') || '',
@@ -16,7 +17,8 @@ const XavierOS = () => {
     claude: localStorage.getItem('claude_api_key') || '',
     openai: localStorage.getItem('openai_api_key') || '',
     sonnet: localStorage.getItem('sonnet_api_key') || '',
-    noiz: localStorage.getItem('noiz_api_key') || ''
+    noiz: localStorage.getItem('noiz_api_key') || '',
+    google: localStorage.getItem('google_api_key') || ''
   });
 
   // --- ECONOMY & TCG STATE ---
@@ -39,13 +41,42 @@ const XavierOS = () => {
   const [progress, setProgress] = useState(0);
   
   const audioRef = useRef(null);
+  const bgmRef = useRef(null);
   const listeningTimer = useRef(0);
+
+  // Set background music volume very low so it doesn't overpower the voice
+  useEffect(() => {
+    if (bgmRef.current) bgmRef.current.volume = 0.08;
+  });
+
+  // Play sound effects
+  const playSfx = (type) => {
+    try {
+      const url = type === 'unlock' 
+        ? 'https://cdn.pixabay.com/audio/2021/08/04/audio_bb630cc098.mp3' 
+        : 'https://cdn.pixabay.com/audio/2022/03/10/audio_c8c8a73467.mp3';
+      const sfx = new Audio(url);
+      sfx.volume = 0.4;
+      sfx.play();
+    } catch(e) {}
+  };
 
   // Global Books Database
   const books = window.booksDatabase || [];
   const filteredBooks = currentGenre === 'all' 
     ? books 
     : books.filter(b => b.genre?.toLowerCase().includes(currentGenre.toLowerCase()));
+
+  // Helper to fetch actual protagonist names for the portrait circles
+  const getProtagonist = (book) => {
+    const chars = {
+      'my-vampire-system': 'Quinn Talen', 'shadow-monarch': 'Sung Jin-Woo', 'solo-leveling': 'Sung Jin-Woo',
+      'my-dragonic-system': 'Aeron Draketh', 'birth-demonic-sword': 'Cain Valdris', 'legendary-beast-tamer': 'Kael Wildheart',
+      'heavenly-thief': 'Zephyr Nightshade', 'nano-machine': 'Cheon Yeo-Woon', 'second-life-ranker': 'Yeon-woo Cha',
+      'beginning-after-end': 'Arthur Leywin', 'omniscient-reader': 'Kim Dokja', 'overgeared': 'Grid'
+    };
+    return chars[book.id] || 'epic fantasy protagonist';
+  };
 
   // Sync Inventory
   useEffect(() => {
@@ -97,6 +128,7 @@ const XavierOS = () => {
         newLevel += 1;
         const unlocked = rollForCard(selectedBook);
         newCards.unshift(unlocked);
+        playSfx('unlock');
         setLatestUnlock(unlocked);
         setTimeout(() => setLatestUnlock(null), 6000);
       }
@@ -142,6 +174,7 @@ const XavierOS = () => {
       const baseName = sac[0]?.name.split(' ')[0] || 'Aether';
       const newCard = { id: Date.now(), rarity: 'Rare', name: `Refined ${baseName} Soul`, bookSource: 'The Aether Forge', color: '#0070dd' };
       
+      playSfx('craft');
       setLatestUnlock(newCard);
       setTimeout(() => setLatestUnlock(null), 6000);
 
@@ -168,27 +201,65 @@ const XavierOS = () => {
       const auraTraits = sortedCards.map(c => `${c.rarity} ${c.name}`).join(', ');
       const auraPrompt = auraTraits ? ` The listener possesses a supernatural aura defined by these artifacts: [${auraTraits}]. Extremely subtly weave an easter egg related to these artifacts into this chapter's narrative.` : "";
 
-      // Create dynamic storyline text that adapts to the book and episode
-      const generatedStoryText = `Welcome to Episode ${episodeNum} of ${book.title}. ${auraPrompt} The shadows lengthen as our protagonist steps into the unknown, ready to face the destiny that awaits.`;
+      // 
+      let generatedStoryText = `Welcome to Episode ${episodeNum} of ${book.title}. The journey continues.`;
+      let generatedTitle = `Episode ${episodeNum}`;
+      
+      try {
+        const aiRes = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            series: book.id, 
+            chapterNumber: episodeNum, 
+            aiModel: localStorage.getItem('active_ai') || 'gemini',
+            apiKey: localStorage.getItem(`${localStorage.getItem('active_ai') || 'gemini'}_api_key`)
+          })
+        });
+        if (aiRes.ok) {
+          const aiData = await aiRes.json();
+          generatedStoryText = aiData.chapter;
+          generatedTitle = aiData.chapterTitle;
+        }
+      } catch(err) {
+        console.error("AI Generation failed, using fallback.");
+      }
 
-      // Placeholder API Generation Logic (You can swap this with real fetches)
-      const storyData = {
-         chapterNumber: episodeNum,
-         chapterTitle: `Episode ${episodeNum}: New Horizons`,
+      c         chapterNumber: episodeNum,
+
          wordCount: generatedStoryText.split(" ").length,
-         estimatedReadTime: 1,
-         protagonist: book.title,
+         estimatedRego ost(book),
          chapter: generatedStoryText
       };
-      setStoryContent(storyData);
-
       // Generate dynamic scene and character images based on the book
       const imagePrompt = `Epic scene from ${book.title}, episode ${episodeNum}. Cinematic, dramatic lighting, highly detailed digital art`;
       setCurrentImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&seed=${book.id}_ep${episodeNum}&nologo=true`);
       
-      // Dynamic Voice Generation (Noiz.ai with StreamElements fallback)
+      // Strip AI markdown formatting so the TTS doesn't read gibberish like "asterisk asterisk"
+      const cleanSpokenText = generatedStoryText.replace(/[*_#`~]/g, '').replace(/\n+/g, ' ').trim();
+
+      // Dynamic Voice Generation (Google Cloud TTS -> Noiz.ai -> StreamElements fallback)
+      const ttsEngine = localStorage.getItem('active_tts') || 'streamelements';
+      const googleKey = localStorage.getItem('google_api_key');
       const noizKey = localStorage.getItem('noiz_api_key');
-      if (noizKey) {
+      
+      if (ttsEngine === 'google' && googleKey) {
+        const googleRes = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            input: { text: cleanSpokenText },
+            voice: { languageCode: 'en-US', name: 'en-US-Journey-D' }, // Journey Voice (Ultra-Realistic)
+            audioConfig: { audioEncoding: 'MP3' }
+          })
+        });
+        if (googleRes.ok) {
+          const data = await googleRes.json();
+          setAudioUrl("data:audio/mp3;base64," + data.audioContent);
+        } else {
+          setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(cleanSpokenText)}`);
+        }
+      } else if (ttsEngine === 'noiz' && noizKey) {
         const ttsResponse = await fetch('https://api.noiz.ai/v1/audio/speech', {
           method: 'POST',
           headers: {
@@ -197,7 +268,7 @@ const XavierOS = () => {
           },
           body: JSON.stringify({
             model: 'tts-1',
-            input: generatedStoryText,
+            input: cleanSpokenText,
             voice: 'alloy' // You can map this dynamically to nova, shimmer, etc., later based on the book!
           })
         });
@@ -205,10 +276,10 @@ const XavierOS = () => {
           const audioBlob = await ttsResponse.blob();
           setAudioUrl(URL.createObjectURL(audioBlob));
         } else {
-          setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(generatedStoryText)}`);
+          setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(cleanSpokenText)}`);
         }
       } else {
-        setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(generatedStoryText)}`);
+        setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(cleanSpokenText)}`);
       }
     } catch (err) {
       setError("Failed to awaken book.");
@@ -230,8 +301,15 @@ const XavierOS = () => {
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
-    else { audioRef.current.play(); setIsPlaying(true); }
+    if (isPlaying) { 
+      audioRef.current.pause(); 
+      if(bgmRef.current) bgmRef.current.pause();
+      setIsPlaying(false); 
+    } else { 
+      audioRef.current.play(); 
+      if(bgmRef.current) bgmRef.current.play();
+      setIsPlaying(true); 
+    }
   };
   
   const handleAudioEnded = () => {
@@ -333,6 +411,18 @@ const XavierOS = () => {
             <div className="api-section">
               <h4>Voice Models</h4>
               <div className="api-input-group">
+                <label>Active Voice Engine</label>
+                <select value={activeTTS} onChange={e => setActiveTTS(e.target.value)}>
+                  <option value="streamelements">StreamElements (Free)</option>
+                  <option value="google">Google Cloud TTS (Paid)</option>
+                  <option value="noiz">Noiz.ai (Paid)</option>
+                </select>
+              </div>
+              <div className="api-input-group">
+                <label>Google Cloud TTS API Key</label>
+                <input type="password" value={apiKeys.google} onChange={e => setApiKeys({...apiKeys, google: e.target.value})} placeholder="Enter key" />
+              </div>
+              <div className="api-input-group">
                 <label>Noiz.ai API Key</label>
                 <input type="password" value={apiKeys.noiz} onChange={e => setApiKeys({...apiKeys, noiz: e.target.value})} placeholder="Enter key" />
               </div>
@@ -340,6 +430,7 @@ const XavierOS = () => {
             <div className="api-actions">
               <button className="save-btn" onClick={() => {
                 localStorage.setItem('active_ai', activeAI);
+                localStorage.setItem('active_tts', activeTTS);
                 localStorage.setItem('gemini_api_key', apiKeys.gemini);
                 localStorage.setItem('grok_api_key', apiKeys.grok);
                 localStorage.setItem('mistral_api_key', apiKeys.mistral);
@@ -347,6 +438,7 @@ const XavierOS = () => {
                 localStorage.setItem('openai_api_key', apiKeys.openai);
                 localStorage.setItem('sonnet_api_key', apiKeys.sonnet);
                 localStorage.setItem('noiz_api_key', apiKeys.noiz);
+                localStorage.setItem('google_api_key', apiKeys.google);
                 setApiSettingsOpen(false);
               }}>Save</button>
               <button className="close-btn" onClick={() => setApiSettingsOpen(false)}>Cancel</button>
@@ -390,7 +482,7 @@ const XavierOS = () => {
                       <div className="character-circle" style={{
                           position: 'absolute', top: '15px', right: '15px', width: '50px', height: '50px',
                           borderRadius: '50%', border: '2px solid var(--gold-primary)', zIndex: 10,
-                          backgroundImage: `url('https://image.pollinations.ai/prompt/portrait%20of%20protagonist%20from%20${encodeURIComponent(book.title)}?width=150&height=150&nologo=true')`,
+                          backgroundImage: `url('https://image.pollinations.ai/prompt/detailed%20face%20portrait%20of%20${encodeURIComponent(getProtagonist(book))}%20from%20${encodeURIComponent(book.title)}?width=150&height=150&nologo=true')`,
                           backgroundSize: 'cover', backgroundPosition: 'center', boxShadow: '0 0 10px rgba(0,0,0,0.8)'
                       }}></div>
 
@@ -427,7 +519,7 @@ const XavierOS = () => {
                   <div className="character-circle" style={{
                       position: 'absolute', top: '20px', right: '20px', width: '70px', height: '70px',
                       borderRadius: '50%', border: '3px solid var(--gold-primary)', zIndex: 10,
-                      backgroundImage: `url('https://image.pollinations.ai/prompt/portrait%20of%20protagonist%20from%20${encodeURIComponent(selectedBook.title)}?width=200&height=200&nologo=true')`,
+                      backgroundImage: `url('https://image.pollinations.ai/prompt/detailed%20face%20portrait%20of%20${encodeURIComponent(getProtagonist(selectedBook))}%20from%20${encodeURIComponent(selectedBook.title)}?width=200&height=200&nologo=true')`,
                       backgroundSize: 'cover', backgroundPosition: 'center', boxShadow: '0 0 15px rgba(0,0,0,0.8)'
                   }}></div>
                   
@@ -517,7 +609,10 @@ const XavierOS = () => {
               </div>
 
               {audioUrl && (
-                <audio ref={audioRef} src={audioUrl} autoPlay onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} onTimeUpdate={handleTimeUpdate} onEnded={handleAudioEnded} style={{ display: 'none' }}></audio>
+                <>
+                  <audio ref={bgmRef} src="https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3" loop style={{ display: 'none' }}></audio>
+                  <audio ref={audioRef} src={audioUrl} autoPlay onPlay={() => { setIsPlaying(true); if(bgmRef.current) bgmRef.current.play(); }} onPause={() => { setIsPlaying(false); if(bgmRef.current) bgmRef.current.pause(); }} onTimeUpdate={handleTimeUpdate} onEnded={handleAudioEnded} style={{ display: 'none' }}></audio>
+                </>
               )}
             </div>
           </div>
