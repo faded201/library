@@ -8,9 +8,15 @@ const XavierOS = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(1);
   const [apiSettingsOpen, setApiSettingsOpen] = useState(false);
+  const [activeAI, setActiveAI] = useState(localStorage.getItem('active_ai') || 'gemini');
   const [apiKeys, setApiKeys] = useState({
     gemini: localStorage.getItem('gemini_api_key') || '',
-    ttsai: localStorage.getItem('ttsai_api_key') || ''
+    grok: localStorage.getItem('grok_api_key') || '',
+    mistral: localStorage.getItem('mistral_api_key') || '',
+    claude: localStorage.getItem('claude_api_key') || '',
+    openai: localStorage.getItem('openai_api_key') || '',
+    sonnet: localStorage.getItem('sonnet_api_key') || '',
+    noiz: localStorage.getItem('noiz_api_key') || ''
   });
 
   // --- ECONOMY & TCG STATE ---
@@ -162,23 +168,48 @@ const XavierOS = () => {
       const auraTraits = sortedCards.map(c => `${c.rarity} ${c.name}`).join(', ');
       const auraPrompt = auraTraits ? ` The listener possesses a supernatural aura defined by these artifacts: [${auraTraits}]. Extremely subtly weave an easter egg related to these artifacts into this chapter's narrative.` : "";
 
+      // Create dynamic storyline text that adapts to the book and episode
+      const generatedStoryText = `Welcome to Episode ${episodeNum} of ${book.title}. ${auraPrompt} The shadows lengthen as our protagonist steps into the unknown, ready to face the destiny that awaits.`;
+
       // Placeholder API Generation Logic (You can swap this with real fetches)
       const storyData = {
          chapterNumber: episodeNum,
          chapterTitle: `Episode ${episodeNum}: New Horizons`,
-         wordCount: 2500,
-         estimatedReadTime: 15,
+         wordCount: generatedStoryText.split(" ").length,
+         estimatedReadTime: 1,
          protagonist: book.title,
-         chapter: `The journey continues for our hero in ${book.title}. ${auraPrompt}`
+         chapter: generatedStoryText
       };
       setStoryContent(storyData);
 
-      // Generate dynamic scene and character images
-      const imagePrompt = `${book.title} scene ${episodeNum}. Cinematic, dramatic lighting, fantasy art style`;
+      // Generate dynamic scene and character images based on the book
+      const imagePrompt = `Epic scene from ${book.title}, episode ${episodeNum}. Cinematic, dramatic lighting, highly detailed digital art`;
       setCurrentImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&seed=${book.id}_ep${episodeNum}&nologo=true`);
       
-      // Placeholder Audio
-      setAudioUrl("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
+      // Dynamic Voice Generation (Noiz.ai with StreamElements fallback)
+      const noizKey = localStorage.getItem('noiz_api_key');
+      if (noizKey) {
+        const ttsResponse = await fetch('https://api.noiz.ai/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${noizKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'tts-1',
+            input: generatedStoryText,
+            voice: 'alloy' // You can map this dynamically to nova, shimmer, etc., later based on the book!
+          })
+        });
+        if (ttsResponse.ok) {
+          const audioBlob = await ttsResponse.blob();
+          setAudioUrl(URL.createObjectURL(audioBlob));
+        } else {
+          setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(generatedStoryText)}`);
+        }
+      } else {
+        setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(generatedStoryText)}`);
+      }
     } catch (err) {
       setError("Failed to awaken book.");
     } finally {
@@ -264,18 +295,58 @@ const XavierOS = () => {
             <div className="api-section">
               <h4>AI Models</h4>
               <div className="api-input-group">
+                <label>Active Story AI</label>
+                <select value={activeAI} onChange={e => setActiveAI(e.target.value)}>
+                  <option value="gemini">Gemini (Free)</option>
+                  <option value="grok">Grok (Free)</option>
+                  <option value="mistral">Mistral (Free)</option>
+                  <option value="claude">Claude (Paid)</option>
+                  <option value="openai">OpenAI GPT-4 (Paid)</option>
+                  <option value="sonnet">Claude Sonnet (Paid)</option>
+                </select>
+              </div>
+              <div className="api-input-group">
                 <label>Gemini API Key</label>
                 <input type="password" value={apiKeys.gemini} onChange={e => setApiKeys({...apiKeys, gemini: e.target.value})} placeholder="Enter key" />
               </div>
               <div className="api-input-group">
-                <label>TTS.ai API Key</label>
-                <input type="password" value={apiKeys.ttsai} onChange={e => setApiKeys({...apiKeys, ttsai: e.target.value})} placeholder="Enter key" />
+                <label>Grok API Key</label>
+                <input type="password" value={apiKeys.grok} onChange={e => setApiKeys({...apiKeys, grok: e.target.value})} placeholder="Enter key" />
+              </div>
+              <div className="api-input-group">
+                <label>Mistral API Key</label>
+                <input type="password" value={apiKeys.mistral} onChange={e => setApiKeys({...apiKeys, mistral: e.target.value})} placeholder="Enter key" />
+              </div>
+              <div className="api-input-group">
+                <label>Claude API Key</label>
+                <input type="password" value={apiKeys.claude} onChange={e => setApiKeys({...apiKeys, claude: e.target.value})} placeholder="Enter key" />
+              </div>
+              <div className="api-input-group">
+                <label>OpenAI API Key</label>
+                <input type="password" value={apiKeys.openai} onChange={e => setApiKeys({...apiKeys, openai: e.target.value})} placeholder="Enter key" />
+              </div>
+              <div className="api-input-group">
+                <label>Sonnet API Key</label>
+                <input type="password" value={apiKeys.sonnet} onChange={e => setApiKeys({...apiKeys, sonnet: e.target.value})} placeholder="Enter key" />
+              </div>
+            </div>
+            <div className="api-section">
+              <h4>Voice Models</h4>
+              <div className="api-input-group">
+                <label>Noiz.ai API Key</label>
+                <input type="password" value={apiKeys.noiz} onChange={e => setApiKeys({...apiKeys, noiz: e.target.value})} placeholder="Enter key" />
               </div>
             </div>
             <div className="api-actions">
               <button className="save-btn" onClick={() => {
+                localStorage.setItem('active_ai', activeAI);
                 localStorage.setItem('gemini_api_key', apiKeys.gemini);
-                localStorage.setItem('ttsai_api_key', apiKeys.ttsai);
+                localStorage.setItem('grok_api_key', apiKeys.grok);
+                localStorage.setItem('mistral_api_key', apiKeys.mistral);
+                localStorage.setItem('claude_api_key', apiKeys.claude);
+                localStorage.setItem('openai_api_key', apiKeys.openai);
+                localStorage.setItem('sonnet_api_key', apiKeys.sonnet);
+                localStorage.setItem('noiz_api_key', apiKeys.noiz);
                 setApiSettingsOpen(false);
               }}>Save</button>
               <button className="close-btn" onClick={() => setApiSettingsOpen(false)}>Cancel</button>
