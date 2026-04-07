@@ -39,6 +39,7 @@ const XavierOS = () => {
   const [currentImage, setCurrentImage] = useState(null);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
   
   const audioRef = useRef(null);
   const bgmRef = useRef(null);
@@ -184,6 +185,44 @@ const XavierOS = () => {
     setCraftingSlots([]);
   };
 
+  // Play individual audio chunks and update visual storyline
+  const playChunk = async (chunksArray, index, bookData) => {
+    if (!chunksArray || index >= chunksArray.length) return;
+    
+    const chunkText = chunksArray[index];
+    setProgress((index / chunksArray.length) * 100);
+
+    // Generate images that actually follow the storyline based on the text chunk!
+    const imagePrompt = `Epic cinematic scene from ${bookData.title}, featuring ${getProtagonist(bookData)}. Action happening: ${chunkText.substring(0, 150)}. Highly detailed digital art, dramatic lighting`;
+    setCurrentImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&nologo=true`);
+
+    // Audio TTS Fetch
+    const ttsEngine = localStorage.getItem('active_tts') || 'streamelements';
+    const googleKey = localStorage.getItem('google_api_key');
+    const noizKey = localStorage.getItem('noiz_api_key');
+    
+    let url = `https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(chunkText)}`;
+    
+    if (ttsEngine === 'google' && googleKey) {
+      try {
+        const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: { text: chunkText }, voice: { languageCode: 'en-US', name: 'en-US-Journey-D' }, audioConfig: { audioEncoding: 'MP3' }})
+        });
+        if (res.ok) { const d = await res.json(); url = "data:audio/mp3;base64," + d.audioContent; }
+      } catch(e) {}
+    } else if (ttsEngine === 'noiz' && noizKey) {
+      try {
+        const res = await fetch('https://api.noiz.ai/v1/audio/speech', {
+          method: 'POST', headers: { 'Authorization': `Bearer ${noizKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: 'tts-1', input: chunkText, voice: 'alloy' })
+        });
+        if (res.ok) { const b = await res.blob(); url = URL.createObjectURL(b); }
+      } catch(e) {}
+    }
+    setAudioUrl(url);
+  };
+
   // Player & Generation Logic
   const awakenBook = async (book, episodeNum = 1) => {
     setError(null);
@@ -225,64 +264,34 @@ const XavierOS = () => {
         console.error("AI Generation failed, using fallback.");
       }
 
+      // Strip AI markdown formatting and chunk by sentence for limits and storyline syncing
+      const cleanSpokenText = generatedStoryText.replace(/[*_#`~]/g, '').replace(/\n+/g, ' ').trim();
+      const sentences = cleanSpokenText.match(/[^.!?]+[.!?]+/g) || [cleanSpokenText];
+      const chunks = [];
+      let curr = "";
+      sentences.forEach(s => {
+        if ((curr + s).length > 180) {
+          chunks.push(curr.trim());
+          curr = s;
+        } else {
+          curr += " " + s;
+        }
+      });
+      if (curr) chunks.push(curr.trim());
+
       setStoryContent({
          chapterTitle: generatedTitle,
          chapterNumber: episodeNum,
          wordCount: generatedStoryText.split(" ").length,
          estimatedReadTime: Math.ceil(generatedStoryText.split(" ").length / 200),
          protagonist: getProtagonist(book),
-         chapter: generatedStoryText
+         chapter: generatedStoryText,
+         chunks: chunks
       });
-      // Generate dynamic scene and character images based on the book
-      const imagePrompt = `Epic scene from ${book.title}, episode ${episodeNum}. Cinematic, dramatic lighting, highly detailed digital art`;
-      setCurrentImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&seed=${book.id}_ep${episodeNum}&nologo=true`);
-      
-      // Strip AI markdown formatting so the TTS doesn't read gibberish like "asterisk asterisk"
-      const cleanSpokenText = generatedStoryText.replace(/[*_#`~]/g, '').replace(/\n+/g, ' ').trim();
 
-      // Dynamic Voice Generation (Google Cloud TTS -> Noiz.ai -> StreamElements fallback)
-      const ttsEngine = localStorage.getItem('active_tts') || 'streamelements';
-      const googleKey = localStorage.getItem('google_api_key');
-      const noizKey = localStorage.getItem('noiz_api_key');
-      
-      if (ttsEngine === 'google' && googleKey) {
-        const googleRes = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            input: { text: cleanSpokenText },
-            voice: { languageCode: 'en-US', name: 'en-US-Journey-D' }, // Journey Voice (Ultra-Realistic)
-            audioConfig: { audioEncoding: 'MP3' }
-          })
-        });
-        if (googleRes.ok) {
-          const data = await googleRes.json();
-          setAudioUrl("data:audio/mp3;base64," + data.audioContent);
-        } else {
-          setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(cleanSpokenText)}`);
-        }
-      } else if (ttsEngine === 'noiz' && noizKey) {
-        const ttsResponse = await fetch('https://api.noiz.ai/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${noizKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'tts-1',
-            input: cleanSpokenText,
-            voice: 'alloy' // You can map this dynamically to nova, shimmer, etc., later based on the book!
-          })
-        });
-        if (ttsResponse.ok) {
-          const audioBlob = await ttsResponse.blob();
-          setAudioUrl(URL.createObjectURL(audioBlob));
-        } else {
-          setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(cleanSpokenText)}`);
-        }
-      } else {
-        setAudioUrl(`https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(cleanSpokenText)}`);
-      }
+      setPlaylistIndex(0);
+      setIsAwakening(false);
+      playChunk(chunks, 0, book);
     } catch (err) {
       setError("Failed to awaken book.");
     } finally {
@@ -291,9 +300,6 @@ const XavierOS = () => {
   };
 
   const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
-    setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
-    
     listeningTimer.current += 1;
     if (listeningTimer.current > 120) {
       listeningTimer.current = 0;
@@ -315,9 +321,15 @@ const XavierOS = () => {
   };
   
   const handleAudioEnded = () => {
-     setIsPlaying(false);
-     gainXP(50);
-     awakenBook(selectedBook, currentEpisode + 1);
+     if (storyContent && storyContent.chunks && playlistIndex < storyContent.chunks.length - 1) {
+       const nextIdx = playlistIndex + 1;
+       setPlaylistIndex(nextIdx);
+       playChunk(storyContent.chunks, nextIdx, selectedBook);
+     } else {
+       setIsPlaying(false);
+       gainXP(50);
+       awakenBook(selectedBook, currentEpisode + 1);
+     }
   };
 
   return (
@@ -613,7 +625,7 @@ const XavierOS = () => {
               {audioUrl && (
                 <>
                   <audio ref={bgmRef} src="https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3" loop style={{ display: 'none' }}></audio>
-                  <audio ref={audioRef} src={audioUrl} autoPlay onPlay={() => { setIsPlaying(true); if(bgmRef.current) bgmRef.current.play(); }} onPause={() => { setIsPlaying(false); if(bgmRef.current) bgmRef.current.pause(); }} onTimeUpdate={handleTimeUpdate} onEnded={handleAudioEnded} style={{ display: 'none' }}></audio>
+              <audio ref={audioRef} src={audioUrl} autoPlay onPlay={() => { setIsPlaying(true); if(bgmRef.current) bgmRef.current.play(); }} onPause={() => { setIsPlaying(false); if(bgmRef.current) bgmRef.current.pause(); }} onTimeUpdate={handleTimeUpdate} onEnded={handleAudioEnded} onError={handleAudioEnded} style={{ display: 'none' }}></audio>
                 </>
               )}
             </div>
