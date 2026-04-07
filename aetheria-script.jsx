@@ -225,12 +225,15 @@ const XavierOS = () => {
         console.error("AI Generation failed, using fallback.");
       }
 
-      c         chapterNumber: episodeNum,
-
+      setStoryContent({
+      setStoryContent({
+         chapterTitle: generatedTitle,
+         chapterNumber: episodeNum,
          wordCount: generatedStoryText.split(" ").length,
-         estimatedRego ost(book),
+         estimatedReadTime: Math.ceil(generatedStoryText.split(" ").length / 200),
+         protagonist: getProtagonist(book),
          chapter: generatedStoryText
-      };
+      });
       // Generate dynamic scene and character images based on the book
       const imagePrompt = `Epic scene from ${book.title}, episode ${episodeNum}. Cinematic, dramatic lighting, highly detailed digital art`;
       setCurrentImage(`https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&seed=${book.id}_ep${episodeNum}&nologo=true`);
