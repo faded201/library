@@ -8,22 +8,22 @@ const XavierOS = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [currentEpisode, setCurrentEpisode] = useState(1);
   const [apiSettingsOpen, setApiSettingsOpen] = useState(false);
-  const [activeAI, setActiveAI] = useState(localStorage.getItem('active_ai') || 'gemini');
-  const [activeTTS, setActiveTTS] = useState(localStorage.getItem('active_tts') || 'streamelements');
+  const [activeAI, setActiveAI] = useState(typeof window !== 'undefined' ? localStorage.getItem('active_ai') || 'gemini' : 'gemini');
+  const [activeTTS, setActiveTTS] = useState(typeof window !== 'undefined' ? localStorage.getItem('active_tts') || 'streamelements' : 'streamelements');
   const [apiKeys, setApiKeys] = useState({
-    gemini: localStorage.getItem('gemini_api_key') || '',
-    grok: localStorage.getItem('grok_api_key') || '',
-    mistral: localStorage.getItem('mistral_api_key') || '',
-    claude: localStorage.getItem('claude_api_key') || '',
-    openai: localStorage.getItem('openai_api_key') || '',
-    sonnet: localStorage.getItem('sonnet_api_key') || '',
-    noiz: localStorage.getItem('noiz_api_key') || '',
-    google: localStorage.getItem('google_api_key') || ''
+    gemini: typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') || '' : '',
+    grok: typeof window !== 'undefined' ? localStorage.getItem('grok_api_key') || '' : '',
+    mistral: typeof window !== 'undefined' ? localStorage.getItem('mistral_api_key') || '' : '',
+    claude: typeof window !== 'undefined' ? localStorage.getItem('claude_api_key') || '' : '',
+    openai: typeof window !== 'undefined' ? localStorage.getItem('openai_api_key') || '' : '',
+    sonnet: typeof window !== 'undefined' ? localStorage.getItem('sonnet_api_key') || '' : '',
+    noiz: typeof window !== 'undefined' ? localStorage.getItem('noiz_api_key') || '' : '',
+    google: typeof window !== 'undefined' ? localStorage.getItem('google_api_key') || '' : ''
   });
 
   // --- ECONOMY & TCG STATE ---
   const [inventory, setInventory] = useState(() => {
-    const saved = localStorage.getItem('xavier_inventory');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('xavier_inventory') : null;
     return saved ? JSON.parse(saved) : { xp: 0, level: 1, cards: [], aetherium: 0, aetheriumHistory: [] };
   });
   const [craftingSlots, setCraftingSlots] = useState([]);
@@ -62,7 +62,7 @@ const XavierOS = () => {
   };
 
   // Global Books Database
-  const books = window.booksDatabase || [];
+  const books = typeof window !== 'undefined' ? window.booksDatabase || [] : [];
   const filteredBooks = currentGenre === 'all' 
     ? books 
     : books.filter(b => b.genre?.toLowerCase().includes(currentGenre.toLowerCase()));
@@ -225,7 +225,6 @@ const XavierOS = () => {
         console.error("AI Generation failed, using fallback.");
       }
 
-      setStoryContent({
       setStoryContent({
          chapterTitle: generatedTitle,
          chapterNumber: episodeNum,
@@ -714,5 +713,9 @@ const styles = {
 };
 
 // Required to make the component available to the rest of your app
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<XavierOS />);
+if (typeof window !== 'undefined') {
+  const rootElement = document.getElementById('root');
+  if (rootElement) ReactDOM.createRoot(rootElement).render(<XavierOS />);
+}
+
+export default XavierOS;
