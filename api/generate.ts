@@ -146,7 +146,7 @@ Write the next chapter now, continuing seamlessly.`;
       try {
         if (aiModel === 'gemini') {
           // Using the smarter Gemini 1.5 Pro model with a strict 0.5 temperature
-          const res = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=\${activeKey}\`, {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=\${activeKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.5 } })
@@ -156,7 +156,7 @@ Write the next chapter now, continuing seamlessly.`;
         } else if (['grok', 'mistral', 'gpt4'].includes(aiModel)) {
           const res = await fetch(selectedAI.endpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${activeKey}\` },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer \${activeKey}` },
             body: JSON.stringify({
               model: aiModel === 'gpt4' ? 'gpt-4-turbo' : (aiModel === 'mistral' ? 'mistral-large-latest' : 'grok-beta'),
               messages: [{ role: 'system', content: 'You are a precise, focused storyteller. Do not ramble.' }, { role: 'user', content: prompt }],
@@ -307,5 +307,104 @@ function updateCharacterMemory(memory: CharacterMemory, chapter: string, chapter
   // Keep only last 10 events to prevent memory bloat
   if (memory.events.length > 10) {
     memory.events = memory.events.slice(-10);
+  }
+}
+
+export default async function handler(req: any, res: any) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const { series, chapterNumber, aiModel, apiKey }: StoryRequest = req.body;
+
+  try {
+    const storyConfig = getStoryConfig(series || 'my-vampire-system');
+    let characterMemory = characterMemoryStore[series || 'my-vampire-system'];
+    
+    if (!characterMemory) {
+      characterMemory = initializeCharacterMemory(series || 'my-vampire-system', storyConfig.protagonist);
+      characterMemoryStore[series || 'my-vampire-system'] = characterMemory;
+    }
+
+    const selectedAI = aiModels[aiModel as keyof typeof aiModels] || aiModels.gemini;
+    const activeKey = apiKey || selectedAI.apiKey;
+
+    // Build the AI prompt
+    let prompt = `Write the next chapter (Chapter ${chapterNumber}) for the ${storyConfig.series} series. 
+
+Protagonist: ${storyConfig.protagonist}
+Current traits: ${JSON.stringify(characterMemory.traits)}
+Recent events: ${characterMemory.events.slice(-3).join('. ')}
+World state: ${JSON.stringify(characterMemory.worldState)}
+
+Write a compelling 800-1200 word chapter that continues the story seamlessly. Focus on character development, action, and plot progression. Maintain consistent tone and style.`;
+
+    if (chapterNumber && chapterNumber > 1) {
+      prompt += `\n\nThis is a continuation. Ensure smooth narrative flow from previous chapters.`;
+    }
+
+    prompt += `\n\nWrite the next chapter now, continuing seamlessly.`;
+
+    let chapter = "The shadows lengthened, but the true story was yet to be written...";
+    
+    // ACTUAL AI GENERATION CALL
+    if (activeKey) {
+      try {
+        if (aiModel === 'gemini') {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${activeKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.5 } })
+          });
+          const data = await response.json();
+          if (data.candidates) chapter = data.candidates[0].content.parts[0].text;
+        } else if (['grok', 'mistral', 'gpt4'].includes(aiModel || '')) {
+          const response = await fetch(selectedAI.endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${activeKey}` },
+            body: JSON.stringify({
+              model: aiModel === 'gpt4' ? 'gpt-4-turbo' : (aiModel === 'mistral' ? 'mistral-large-latest' : 'grok-beta'),
+              messages: [{ role: 'system', content: 'You are a precise, focused storyteller. Do not ramble.' }, { role: 'user', content: prompt }],
+              temperature: 0.5
+            })
+          });
+          const data = await response.json();
+          if (data.choices) chapter = data.choices[0].message.content;
+        } else if (['claude', 'sonnet'].includes(aiModel || '')) {
+          const response = await fetch(selectedAI.endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': activeKey, 'anthropic-version': '2023-06-01' },
+            body: JSON.stringify({
+              model: aiModel === 'sonnet' ? 'claude-3-sonnet-20240229' : 'claude-3-opus-20240229',
+              max_tokens: 3000, temperature: 0.5,
+              messages: [{ role: 'user', content: prompt }]
+            })
+          });
+          const data = await response.json();
+          if (data.content) chapter = data.content[0].text;
+        }
+      } catch(e) {
+        console.error("AI API Fetch Error:", e);
+      }
+    }
+    
+    // Update character memory based on new events
+    updateCharacterMemory(characterMemory, chapter, chapterNumber || 1);
+    
+    const response: StoryResponse = {
+      chapter,
+      chapterTitle: `Chapter ${chapterNumber}: ${generateChapterTitle(series || 'my-vampire-system', characterMemory)}`,
+      wordCount: chapter.split(/\s+/).length,
+      estimatedReadTime: Math.ceil(chapter.split(/\s+/).length / 200),
+      protagonist: storyConfig.protagonist,
+      series: storyConfig.series,
+      characterMemory,
+      aiModelUsed: selectedAI.name
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Handler error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
