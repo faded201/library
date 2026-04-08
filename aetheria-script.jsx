@@ -215,7 +215,7 @@ const XavierOS = () => {
     
     // Create image prompt that follows the story narrative 100% with character memory
     const imagePrompt = `Cinematic scene from ${bookData.title}: ${protagonist} ${characterDescription} Scene: ${safeText}. Ultra-detailed character portrait, story-accurate appearance and personality, dramatic lighting, immersive book illustration style`;
-    const newImageUrl = `/api/image?prompt=${encodeURIComponent(imagePrompt)}&seed=${index}`;
+    const newImageUrl = `http://localhost:3002/api/image?prompt=${encodeURIComponent(imagePrompt)}&seed=${index}`;
     setCurrentImage(newImageUrl);
 
     // Audio TTS Fetch - Prioritize Noiz.ai for best quality voices
@@ -223,8 +223,8 @@ const XavierOS = () => {
     const googleKey = localStorage.getItem('google_api_key');
     const noizKey = localStorage.getItem('noiz_api_key');
 
-    // Default to Noiz.ai (best quality) if API key available, otherwise fallback to proxy
-    let url = `/api/tts?text=${encodeURIComponent(chunkText)}`;
+    // Default to Noiz.ai (best quality) if API key available, otherwise fallback to direct Google TTS
+    let url = `http://localhost:3002/api/tts?text=${encodeURIComponent(chunkText)}`;
 
     if (ttsEngine === 'noiz' && noizKey) {
       try {

@@ -65,6 +65,7 @@ app.post('/api/generate', generateHandler);
 // TTS Proxy Route to avoid CORS issues
 app.get('/api/tts', async (req, res) => {
   try {
+    console.log('TTS request received:', req.query);
     const text = req.query.text;
     if (!text) {
       return res.status(400).json({ error: 'Text parameter required' });
@@ -72,6 +73,7 @@ app.get('/api/tts', async (req, res) => {
 
     // Use Google Translate TTS with proper headers
     const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=en`;
+    console.log('Fetching TTS from:', ttsUrl);
 
     const response = await fetch(ttsUrl, {
       headers: {
@@ -79,17 +81,19 @@ app.get('/api/tts', async (req, res) => {
       }
     });
 
+    console.log('TTS response status:', response.status);
     if (!response.ok) {
       throw new Error(`TTS request failed: ${response.status}`);
     }
 
     const audioBuffer = await response.arrayBuffer();
+    console.log('Audio buffer size:', audioBuffer.byteLength);
     res.setHeader('Content-Type', 'audio/mpeg');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.send(Buffer.from(audioBuffer));
   } catch (error) {
     console.error('TTS Proxy Error:', error);
-    res.status(500).json({ error: 'TTS generation failed' });
+    res.status(500).json({ error: 'TTS generation failed', details: error.message });
   }
 });
 
