@@ -4,7 +4,8 @@
   "description": "Never-ending AI-generated audiobook universe with Quinn Talen saga",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run server\" \"vite\"",
+    "server": "node server.js",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -19,12 +20,15 @@
   "author": "faded201",
   "license": "UNLICENSED",
   "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
     "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^9.2.1",
     "vite": "^5.1.4"
   },
   "browserslist": {

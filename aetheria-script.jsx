@@ -259,6 +259,8 @@ const XavierOS = () => {
     setStoryContent(null);
     setProgress(0);
 
+    let characterMemory = null; // Declare characterMemory variable
+
     try {
       const weights = { Mythical: 5, Legendary: 4, Epic: 3, Rare: 2, Common: 1 };
       const sortedCards = [...(inventory.cards || [])].sort((a, b) => weights[b.rarity] - weights[a.rarity]).slice(0, 3);
