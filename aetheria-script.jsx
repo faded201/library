@@ -246,19 +246,33 @@ const XavierOS = () => {
 
     setAudioUrl(url);
     
-    // Ensure audio plays after URL is set
+    // Set up audio element with proper loading
     if (audioRef.current) {
       audioRef.current.src = url;
-      audioRef.current.load();
-      // Small delay to ensure audio element is ready
-      setTimeout(() => {
-        if (audioRef.current && isPlaying) {
-          audioRef.current.play().catch(err => {
+      
+      // Handler for when metadata loads
+      const onCanPlayThrough = () => {
+        console.log('Audio ready to play:', audioRef.current?.duration);
+        audioRef.current?.removeEventListener('canplaythrough', onCanPlayThrough);
+        
+        // Play audio and update state AFTER play starts
+        if (audioRef.current) {
+          audioRef.current.play().then(() => {
+            console.log('Audio playback started');
+            setIsPlaying(true);
+            if(bgmRef.current) {
+              bgmRef.current.volume = 0.08;
+              bgmRef.current.play();
+            }
+          }).catch(err => {
             console.error('Audio play error:', err);
             handleAudioError(err);
           });
         }
-      }, 100);
+      };
+      
+      audioRef.current.addEventListener('canplaythrough', onCanPlayThrough, { once: true });
+      audioRef.current.load();
     }
     
     return url;
@@ -360,7 +374,7 @@ const XavierOS = () => {
 
       setPlaylistIndex(0);
       setIsAwakening(false);
-      setIsPlaying(true); // Start playback immediately
+      setIsPlaying(false); // Don't auto-play, let playChunk handle it
       playChunk(chunks, 0, book, characterMemory);
     } catch (err) {
       setError("Failed to awaken book.");
@@ -398,10 +412,17 @@ const XavierOS = () => {
   const handleAudioEnded = () => {
     if (!storyContent || !storyContent.chunks) return; // Prevent async state loop crashes
 
+    // Make sure audio actually played (prevent instant skip if duration is 0 or invalid)
+    const duration = audioRef.current?.duration || 0;
+    console.log('Audio ended - Duration was:', duration, 'Current chunk:', playlistIndex, 'Total chunks:', storyContent.chunks.length);
+    
     if (playlistIndex < storyContent.chunks.length - 1) {
       const nextIdx = playlistIndex + 1;
       setPlaylistIndex(nextIdx);
-      playChunk(storyContent.chunks, nextIdx, selectedBook, storyContent.characterMemory);
+      // Add small delay to let state update before playing next chunk
+      setTimeout(() => {
+        playChunk(storyContent.chunks, nextIdx, selectedBook, storyContent.characterMemory);
+      }, 300);
     } else {
       setIsPlaying(false);
       gainXP(50);
@@ -800,12 +821,10 @@ const XavierOS = () => {
       </main>
 
       {/* Hidden audio elements for playback - moved outside main for proper React rendering */}
-      <audio ref={bgmRef} key="bgm-audio" src="https://cdn.pixavian.com/audio/2022/01/18/audio_d0a13f69d2.mp3" loop style={{ display: 'none' }} />
+      <audio ref={bgmRef} src="https://cdn.pixavian.com/audio/2022/01/18/audio_d0a13f69d2.mp3" loop style={{ display: 'none' }} />
       <audio
         ref={audioRef}
-        key={audioUrl ? `audio-${playlistIndex}` : 'no-audio'}
-        src={audioUrl || ''}
-        autoPlay={isPlaying}
+        autoPlay={false}
         onPlay={() => {
           setIsPlaying(true);
           if(bgmRef.current) {
@@ -820,6 +839,9 @@ const XavierOS = () => {
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleAudioEnded}
         onError={handleAudioError}
+        onLoadedMetadata={() => {
+          console.log('Audio metadata loaded - Duration:', audioRef.current?.duration);
+        }}
         style={{ display: 'none' }}
       />
     </div>
