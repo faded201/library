@@ -9,7 +9,7 @@ const XavierOS = () => {
   const [currentEpisode, setCurrentEpisode] = useState(1);
   const [apiSettingsOpen, setApiSettingsOpen] = useState(false);
   const [activeAI, setActiveAI] = useState(typeof window !== 'undefined' ? localStorage.getItem('active_ai') || 'gemini' : 'gemini');
-  const [activeTTS, setActiveTTS] = useState(typeof window !== 'undefined' ? localStorage.getItem('active_tts') || 'streamelements' : 'streamelements');
+  const [activeTTS, setActiveTTS] = useState(typeof window !== 'undefined' ? localStorage.getItem('active_tts') || 'noiz' : 'noiz');
   const [apiKeys, setApiKeys] = useState({
     gemini: typeof window !== 'undefined' ? localStorage.getItem('gemini_api_key') || '' : '',
     grok: typeof window !== 'undefined' ? localStorage.getItem('grok_api_key') || '' : '',
@@ -215,29 +215,18 @@ const XavierOS = () => {
     
     // Create image prompt that follows the story narrative 100% with character memory
     const imagePrompt = `Cinematic scene from ${bookData.title}: ${protagonist} ${characterDescription} Scene: ${safeText}. Ultra-detailed character portrait, story-accurate appearance and personality, dramatic lighting, immersive book illustration style`;
-    const newImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=800&height=600&nologo=true&seed=${index}`;
+    const newImageUrl = `/api/image?prompt=${encodeURIComponent(imagePrompt)}&seed=${index}`;
     setCurrentImage(newImageUrl);
 
-    // Audio TTS Fetch - Google Translate (free, no API key required)
-    const ttsEngine = localStorage.getItem('active_tts') || 'google_translate';
+    // Audio TTS Fetch - Prioritize Noiz.ai for best quality voices
+    const ttsEngine = localStorage.getItem('active_tts') || 'noiz';
     const googleKey = localStorage.getItem('google_api_key');
     const noizKey = localStorage.getItem('noiz_api_key');
 
-    // Default to Google Translate TTS (free and reliable)
-    let url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(chunkText)}&tl=en`;
+    // Default to Noiz.ai (best quality) if API key available, otherwise fallback to proxy
+    let url = `/api/tts?text=${encodeURIComponent(chunkText)}`;
 
-    if (ttsEngine === 'google' && googleKey) {
-      try {
-        const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleKey}`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: { text: chunkText }, voice: { languageCode: 'en-US', name: 'en-US-Journey-D' }, audioConfig: { audioEncoding: 'MP3' }})
-        });
-        if (res.ok) { const d = await res.json(); url = "data:audio/mp3;base64," + d.audioContent; }
-      } catch(e) { console.error('Google TTS error:', e); }
-    } else if (ttsEngine === 'streamelements') {
-      // Fallback to StreamElements if explicitly selected (requires API key)
-      url = `https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=${encodeURIComponent(chunkText)}`;
-    } else if (ttsEngine === 'noiz' && noizKey) {
+    if (ttsEngine === 'noiz' && noizKey) {
       try {
         const res = await fetch('https://api.noiz.ai/v1/audio/speech', {
           method: 'POST', headers: { 'Authorization': `Bearer ${noizKey}`, 'Content-Type': 'application/json' },
@@ -245,6 +234,14 @@ const XavierOS = () => {
         });
         if (res.ok) { const b = await res.blob(); url = URL.createObjectURL(b); }
       } catch(e) { console.error('Noiz TTS error:', e); }
+    } else if (ttsEngine === 'google' && googleKey) {
+      try {
+        const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleKey}`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: { text: chunkText }, voice: { languageCode: 'en-US', name: 'en-US-Journey-D' }, audioConfig: { audioEncoding: 'MP3' }})
+        });
+        if (res.ok) { const d = await res.json(); url = "data:audio/mp3;base64," + d.audioContent; }
+      } catch(e) { console.error('Google TTS error:', e); }
     }
 
     setAudioUrl(url);

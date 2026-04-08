@@ -62,6 +62,64 @@ const generateHandler = async (req, res) => {
 // API Routes
 app.post('/api/generate', generateHandler);
 
+// TTS Proxy Route to avoid CORS issues
+app.get('/api/tts', async (req, res) => {
+  try {
+    const text = req.query.text;
+    if (!text) {
+      return res.status(400).json({ error: 'Text parameter required' });
+    }
+
+    // Use Google Translate TTS with proper headers
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=en`;
+
+    const response = await fetch(ttsUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`TTS request failed: ${response.status}`);
+    }
+
+    const audioBuffer = await response.arrayBuffer();
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(Buffer.from(audioBuffer));
+  } catch (error) {
+    console.error('TTS Proxy Error:', error);
+    res.status(500).json({ error: 'TTS generation failed' });
+  }
+});
+
+// Image Proxy Route to avoid CORS issues
+app.get('/api/image', async (req, res) => {
+  try {
+    const prompt = req.query.prompt;
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt parameter required' });
+    }
+
+    // Use pollinations.ai for image generation
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=600&nologo=true&seed=${req.query.seed || 0}`;
+
+    const response = await fetch(imageUrl);
+
+    if (!response.ok) {
+      throw new Error(`Image request failed: ${response.status}`);
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.send(Buffer.from(imageBuffer));
+  } catch (error) {
+    console.error('Image Proxy Error:', error);
+    res.status(500).json({ error: 'Image generation failed' });
+  }
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
