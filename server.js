@@ -62,24 +62,24 @@ const generateHandler = async (req, res) => {
 // API Routes
 app.post('/api/generate', generateHandler);
 
-// Check CosyVoice service health
-let cosyvoiceAvailable = false;
-checkCosyVoiceHealth();
+// Check TTS service health (Node.js TTS on port 3003)
+let ttsServiceAvailable = false;
+checkTTSServiceHealth();
 
-async function checkCosyVoiceHealth() {
+async function checkTTSServiceHealth() {
   try {
     const res = await fetch('http://localhost:3003/health', { signal: AbortSignal.timeout(2000) });
-    cosyvoiceAvailable = res.ok;
-    console.log('🎵 CosyVoice Service:', cosyvoiceAvailable ? '✅ Available' : '❌ Not available');
+    ttsServiceAvailable = res.ok;
+    console.log('🎵 TTS Service:', ttsServiceAvailable ? '✅ Available (Node.js)' : '❌ Not available (will use inline Google TTS)');
   } catch (e) {
-    cosyvoiceAvailable = false;
-    console.log('🎵 CosyVoice Service: ❌ Not available (fallback to Google TTS)');
+    ttsServiceAvailable = false;
+    console.log('🎵 TTS Service: ❌ Not available (will use inline Google TTS)');
   }
   // Re-check every 30 seconds
-  setTimeout(checkCosyVoiceHealth, 30000);
+  setTimeout(checkTTSServiceHealth, 30000);
 }
 
-// TTS Proxy Route - CosyVoice with Google Translate fallback
+// TTS Proxy Route - Try TTS service first, fallback to inline Google TTS
 app.get('/api/tts', async (req, res) => {
   try {
     console.log('🎵 TTS request:', req.query);
@@ -93,33 +93,33 @@ app.get('/api/tts', async (req, res) => {
     let audioBuffer;
     let source = 'unknown';
 
-    // Try CosyVoice first for better quality
-    if (cosyvoiceAvailable) {
+    // Try TTS service (Node.js wrapper around Google APIs)
+    if (ttsServiceAvailable) {
       try {
-        console.log(`🎵 Trying CosyVoice (emotion: ${emotion})...`);
-        const cosyRes = await fetch(
+        console.log(`🎵 Trying TTS service (emotion: ${emotion})...`);
+        const ttsRes = await fetch(
           `http://localhost:3003/api/tts?text=${encodeURIComponent(text)}&emotion=${emotion}`,
           { signal: AbortSignal.timeout(15000) }
         );
         
-        if (cosyRes.ok) {
-          audioBuffer = await cosyRes.arrayBuffer();
-          source = 'CosyVoice';
-          console.log(`✅ CosyVoice: Generated ${audioBuffer.byteLength} bytes`);
+        if (ttsRes.ok) {
+          audioBuffer = await ttsRes.arrayBuffer();
+          source = ttsRes.headers.get('X-TTS-Source') || 'TTS-Service';
+          console.log(`✅ TTS service: Generated ${audioBuffer.byteLength} bytes`);
         } else {
-          throw new Error(`CosyVoice returned ${cosyRes.status}`);
+          throw new Error(`TTS service returned ${ttsRes.status}`);
         }
       } catch (e) {
-        console.warn(`⚠️  CosyVoice failed: ${e.message}, falling back to Google TTS`);
-        cosyvoiceAvailable = false;
+        console.warn(`⚠️  TTS service failed: ${e.message}, using inline Google TTS`);
+        ttsServiceAvailable = false;
         audioBuffer = null;
       }
     }
 
-    // Fallback to Google Translate TTS
+    // Fallback to inline Google Translate TTS
     if (!audioBuffer) {
       try {
-        console.log('🎵 Using Google Translate TTS...');
+        console.log('🎵 Using inline Google Translate TTS...');
         const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=en`;
         
         const response = await fetch(ttsUrl, {
@@ -134,10 +134,10 @@ app.get('/api/tts', async (req, res) => {
         }
 
         audioBuffer = await response.arrayBuffer();
-        source = 'GoogleTTS';
-        console.log(`✅ Google TTS: Generated ${audioBuffer.byteLength} bytes`);
+        source = 'GoogleTranslate-Inline';
+        console.log(`✅ Google Translate TTS: Generated ${audioBuffer.byteLength} bytes`);
       } catch (e) {
-        console.error(`❌ Both TTS services failed: ${e.message}`);
+        console.error(`❌ All TTS methods failed: ${e.message}`);
         throw e;
       }
     }
