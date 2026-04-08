@@ -62,40 +62,96 @@ const generateHandler = async (req, res) => {
 // API Routes
 app.post('/api/generate', generateHandler);
 
-// TTS Proxy Route to avoid CORS issues
+// Check CosyVoice service health
+let cosyvoiceAvailable = false;
+checkCosyVoiceHealth();
+
+async function checkCosyVoiceHealth() {
+  try {
+    const res = await fetch('http://localhost:3003/health', { signal: AbortSignal.timeout(2000) });
+    cosyvoiceAvailable = res.ok;
+    console.log('🎵 CosyVoice Service:', cosyvoiceAvailable ? '✅ Available' : '❌ Not available');
+  } catch (e) {
+    cosyvoiceAvailable = false;
+    console.log('🎵 CosyVoice Service: ❌ Not available (fallback to Google TTS)');
+  }
+  // Re-check every 30 seconds
+  setTimeout(checkCosyVoiceHealth, 30000);
+}
+
+// TTS Proxy Route - CosyVoice with Google Translate fallback
 app.get('/api/tts', async (req, res) => {
   try {
-    console.log('TTS request received:', req.query);
+    console.log('🎵 TTS request:', req.query);
     const text = req.query.text;
+    const emotion = req.query.emotion || 'neutral';
+    
     if (!text) {
       return res.status(400).json({ error: 'Text parameter required' });
     }
 
-    // Use Google Translate TTS with proper headers
-    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=en`;
-    console.log('Fetching TTS from:', ttsUrl);
+    let audioBuffer;
+    let source = 'unknown';
 
-    const response = await fetch(ttsUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    // Try CosyVoice first for better quality
+    if (cosyvoiceAvailable) {
+      try {
+        console.log(`🎵 Trying CosyVoice (emotion: ${emotion})...`);
+        const cosyRes = await fetch(
+          `http://localhost:3003/api/tts?text=${encodeURIComponent(text)}&emotion=${emotion}`,
+          { signal: AbortSignal.timeout(15000) }
+        );
+        
+        if (cosyRes.ok) {
+          audioBuffer = await cosyRes.arrayBuffer();
+          source = 'CosyVoice';
+          console.log(`✅ CosyVoice: Generated ${audioBuffer.byteLength} bytes`);
+        } else {
+          throw new Error(`CosyVoice returned ${cosyRes.status}`);
+        }
+      } catch (e) {
+        console.warn(`⚠️  CosyVoice failed: ${e.message}, falling back to Google TTS`);
+        cosyvoiceAvailable = false;
+        audioBuffer = null;
       }
-    });
-
-    console.log('TTS response status:', response.status);
-    if (!response.ok) {
-      throw new Error(`TTS request failed: ${response.status}`);
     }
 
-    const audioBuffer = await response.arrayBuffer();
-    console.log('Audio buffer size:', audioBuffer.byteLength);
-    
+    // Fallback to Google Translate TTS
+    if (!audioBuffer) {
+      try {
+        console.log('🎵 Using Google Translate TTS...');
+        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=en`;
+        
+        const response = await fetch(ttsUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          },
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Google TTS failed: ${response.status}`);
+        }
+
+        audioBuffer = await response.arrayBuffer();
+        source = 'GoogleTTS';
+        console.log(`✅ Google TTS: Generated ${audioBuffer.byteLength} bytes`);
+      } catch (e) {
+        console.error(`❌ Both TTS services failed: ${e.message}`);
+        throw e;
+      }
+    }
+
+    // Return audio
     res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('X-TTS-Source', source);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Cache-Control', 'public, max-age=3600');
     res.send(Buffer.from(audioBuffer));
+
   } catch (error) {
-    console.error('TTS Proxy Error:', error);
+    console.error('❌ TTS Error:', error.message);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ error: 'TTS generation failed', details: error.message });
   }

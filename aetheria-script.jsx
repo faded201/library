@@ -197,6 +197,34 @@ const XavierOS = () => {
   };
 
   // Play individual audio chunks and update visual storyline
+  // Detect emotion from text for expressive TTS
+  const detectEmotion = (text) => {
+    const textLower = text.toLowerCase();
+    
+    // Define emotion keywords
+    const emotions = {
+      happy: ['happy', 'joy', 'laugh', 'smile', 'delighted', 'thrilled', 'wonderful', 'amazing', 'fantastic', 'love'],
+      sad: ['sad', 'grief', 'mourn', 'tears', 'crying', 'heartbreak', 'despair', 'sorrow', 'depressed', 'miserable'],
+      angry: ['angry', 'furious', 'rage', 'enraged', 'infuriated', 'hostile', 'aggressive', 'outraged', 'furious'],
+      fearful: ['afraid', 'fear', 'terrified', 'scared', 'horror', 'dread', 'panic', 'anxious', 'frightened'],
+      surprise: ['surprised', 'shock', 'amazed', 'astonished', 'stunned', 'startled', 'unexpected', 'wow'],
+      neutral: ['said', 'told', 'asked', 'explained', 'continued', 'replied']
+    };
+    
+    // Count emotion keyword matches
+    let scores = { neutral: 0, happy: 0, sad: 0, angry: 0, fearful: 0, surprise: 0 };
+    
+    for (const [emotion, keywords] of Object.entries(emotions)) {
+      keywords.forEach(keyword => {
+        if (textLower.includes(keyword)) scores[emotion]++;
+      });
+    }
+    
+    // Return emotion with highest score
+    const maxEmotion = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+    return scores[maxEmotion] > 0 ? maxEmotion : 'neutral';
+  };
+
   const playChunk = async (chunksArray, index, bookData, characterMemory) => {
     if (!chunksArray || index >= chunksArray.length) return;
 
@@ -218,13 +246,17 @@ const XavierOS = () => {
     const newImageUrl = `http://localhost:3002/api/image?prompt=${encodeURIComponent(imagePrompt)}&seed=${index}`;
     setCurrentImage(newImageUrl);
 
-    // Audio TTS Fetch - Prioritize Noiz.ai for best quality voices
-    const ttsEngine = localStorage.getItem('active_tts') || 'noiz';
+    // Detect emotion for expressive TTS
+    const detectedEmotion = detectEmotion(chunkText);
+    console.log(`🎬 Chunk ${index}: Detected emotion = ${detectedEmotion}`);
+
+    // Audio TTS Fetch - Try CosyVoice first, then fall back
+    const ttsEngine = localStorage.getItem('active_tts') || 'cosyvoice';
     const googleKey = localStorage.getItem('google_api_key');
     const noizKey = localStorage.getItem('noiz_api_key');
 
-    // Default to Noiz.ai (best quality) if API key available, otherwise fallback to direct Google TTS
-    let url = `http://localhost:3002/api/tts?text=${encodeURIComponent(chunkText)}`;
+    // Build TTS URL - CosyVoice with emotion detection
+    let url = `http://localhost:3002/api/tts?text=${encodeURIComponent(chunkText)}&emotion=${detectedEmotion}`;
 
     if (ttsEngine === 'noiz' && noizKey) {
       try {
