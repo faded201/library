@@ -47,6 +47,14 @@ Write-Host "━━━━━━━━━━━━━━━━━━━━━━�
 Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit -Command `"Set-Location '$scriptPath'; node tts-service.js`"" -WindowStyle Normal
 Start-Sleep -Seconds 2
 
+# Start CosyVoice Bridge
+Write-Host ""
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+Write-Host "🎙️  Starting CosyVoice Bridge (Port 3004)..." -ForegroundColor Magenta
+Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit -Command `"Set-Location '$scriptPath'; node cosyvoice-bridge.js`"" -WindowStyle Normal
+Start-Sleep -Seconds 2
+
 # Start Express Backend
 Write-Host ""
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
@@ -81,6 +89,7 @@ Write-Host ""
 
 Write-Host "🔌 SERVICES RUNNING:" -ForegroundColor Cyan
 Write-Host "   ✅ TTS Service ........... http://$localIP:3003" -ForegroundColor Green
+Write-Host "   ✅ CosyVoice Bridge ..... http://$localIP:3004" -ForegroundColor Green
 Write-Host "   ✅ Express Backend ...... http://$localIP:3002" -ForegroundColor Green
 Write-Host "   ✅ React Frontend ....... http://$localIP:3001" -ForegroundColor Green
 Write-Host ""

@@ -188,11 +188,24 @@ app.get('/api/tts', tts);
 app.post('/api/tts', tts);
 app.get('/api/voices', getVoices);
 
-app.listen(PORT, '127.0.0.1', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log('========================================');
   console.log('🎵 Xavier OS TTS Service');
   console.log('========================================');
-  console.log(`✅ Service running on http://127.0.0.1:${PORT}`);
+  // Get local IP for display
+  const os = require('os');
+  const interfaces = os.networkInterfaces();
+  let localIP = '127.0.0.1';
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        localIP = iface.address;
+        break;
+      }
+    }
+  }
+  console.log(`✅ Service running on http://0.0.0.0:${PORT}`);
+  console.log(`📱 Network accessible at http://${localIP}:${PORT}`);
   console.log('');
   console.log('Speech Synthesis Sources:');
   console.log('  • Primary: Google Translate TTS (free, no API key needed)');

@@ -46,6 +46,14 @@ echo ━━━━━━━━━━━━━━━━━━━━━━━━━
 start "TTS Service" node tts-service.js
 timeout /t 2 /nobreak >nul
 
+REM Start CosyVoice Bridge
+echo.
+echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+echo 🎙️  Starting CosyVoice Bridge (Port 3004)...
+echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+start "CosyVoice Bridge" node cosyvoice-bridge.js
+timeout /t 2 /nobreak >nul
+
 REM Start Express Backend
 echo.
 echo ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -78,6 +86,7 @@ echo.
 
 echo 🔌 SERVICES RUNNING:
 echo    ✅ TTS Service ........... http://%LocalIP%:3003
+echo    ✅ CosyVoice Bridge ..... http://%LocalIP%:3004
 echo    ✅ Express Backend ...... http://%LocalIP%:3002
 echo    ✅ React Frontend ....... http://%LocalIP%:3001
 echo.

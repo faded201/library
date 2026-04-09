@@ -303,8 +303,60 @@ const XavierOS = () => {
     
     // Create image prompt that follows the story narrative 100% with character memory
     const imagePrompt = `Cinematic scene from ${bookData.title}: ${protagonist} ${characterDescription} Scene: ${safeText}. Ultra-detailed character portrait, story-accurate appearance and personality, dramatic lighting, immersive book illustration style`;
-    const newImageUrl = `http://localhost:3002/api/image?prompt=${encodeURIComponent(imagePrompt)}&seed=${index}`;
-    setCurrentImage(newImageUrl);
+    
+    // Generate multiple images for animation effect
+    try {
+      console.log('🎬 [Images] Generating animated sequence...');
+      
+      // Generate 3 images per chunk for smooth animation
+      const imagePrompts = [
+        imagePrompt,
+        imagePrompt + ' (dramatic lighting variant)',
+        imagePrompt + ' (close-up variant)'
+      ];
+      
+      const imageUrls = imagePrompts.map((prompt, i) => 
+        `http://localhost:3002/api/image?prompt=${encodeURIComponent(prompt)}&seed=${index * 10 + i}`
+      );
+      
+      // Start loading all images in parallel
+      const imagePromises = imageUrls.map(url => 
+        fetch(url)
+          .then(r => r.ok ? r.blob().then(b => URL.createObjectURL(b)) : null)
+          .catch(e => {
+            console.warn('🎬 [Images] Could not load variant:', e.message);
+            return null;
+          })
+      );
+      
+      const loadedImages = await Promise.all(imagePromises);
+      const validImages = loadedImages.filter(img => img !== null);
+      
+      if (validImages.length > 0) {
+        setCurrentImage(validImages[0]); // Show first image immediately
+        
+        // Animate through remaining images while audio plays
+        if (validImages.length > 1 && audioRef.current?.duration) {
+          const imageDuration = (audioRef.current.duration * 1000) / validImages.length;
+          validImages.forEach((img, i) => {
+            if (i > 0) {
+              setTimeout(() => {
+                setCurrentImage(img);
+              }, imageDuration * i);
+            }
+          });
+        }
+        
+        console.log(`✅ [Images] Loaded ${validImages.length} images for animation`);
+      } else {
+        // Fallback to single image
+        setCurrentImage(`http://localhost:3002/api/image?prompt=${encodeURIComponent(imagePrompt)}&seed=${index}`);
+        console.warn('🎬 [Images] Using fallback single image');
+      }
+    } catch (imgErr) {
+      console.error('❌ [Images] Sequence failed, using fallback:', imgErr.message);
+      setCurrentImage(`http://localhost:3002/api/image?prompt=${encodeURIComponent(imagePrompt)}&seed=${index}`);
+    }
 
     // Detect emotion for expressive TTS
     const detectedEmotion = detectEmotion(chunkText);
@@ -343,53 +395,77 @@ const XavierOS = () => {
       // Reset the audio element to clear any previous state
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current.crossOrigin = 'anonymous';  // IMPORTANT: Allow cross-origin audio
+      
+      console.log('🎵 [Audio Setup] Creating new audio handler for chunk', index);
+      console.log('🎵 [Audio Setup] URL:', url.substring(0, 60) + '...');
       
       // Create a handler that will definitely fire
       const handleAudioReady = async () => {
-        console.log('🎵 Audio ready to play - Duration:', audioRef.current?.duration, 'seconds');
-        audioRef.current?.removeEventListener('canplaythrough', handleAudioReady);
-        audioRef.current?.removeEventListener('canplay', handleAudioReady);
+        console.log('🎵 [Audio Ready] Event fired - Duration:', audioRef.current?.duration, 'seconds');
         
-        // Play audio with error handling
-        if (audioRef.current) {
-          try {
-            console.log('🎵 Attempting to play audio...');
-            await audioRef.current.play();
-            console.log('🎵 Audio playback started successfully');
-            setIsPlaying(true);
-            if(bgmRef.current) {
-              bgmRef.current.volume = 0.08;
-              bgmRef.current.play();
+        if (audioRef.current?.src) {
+          audioRef.current?.removeEventListener('canplaythrough', handleAudioReady);
+          audioRef.current?.removeEventListener('canplay', handleAudioReady);
+          
+          // Play audio with error handling
+          if (audioRef.current) {
+            try {
+              console.log('🎵 [Audio Play] Starting playback...');
+              const playPromise = audioRef.current.play();
+              
+              if (playPromise !== undefined) {
+                playPromise
+                  .then(() => {
+                    console.log('✅ [Audio Play] Playback started successfully');
+                    setIsPlaying(true);
+                    if(bgmRef.current) {
+                      bgmRef.current.volume = 0.08;
+                      bgmRef.current.play().catch(() => {});
+                    }
+                  })
+                  .catch(err => {
+                    console.error('❌ [Audio Play] Error:', err.message);
+                    setError('Audio playback failed: ' + err.message);
+                  });
+              }
+            } catch(err) {
+              console.error('❌ [Audio Play] Catch error:', err);
+              setError('Audio error: ' + err.message);
             }
-          } catch(err) {
-            console.error('❌ Audio play error:', err);
-            handleAudioError(err);
           }
         }
       };
       
-      // Listen for both canplay and canplaythrough to increase chance of catching the event
-      audioRef.current.addEventListener('canplaythrough', handleAudioReady);
-      audioRef.current.addEventListener('canplay', handleAudioReady);
+      // Listen for both canplay and canplaythrough
+      audioRef.current.addEventListener('canplaythrough', handleAudioReady, { once: true });
+      audioRef.current.addEventListener('canplay', handleAudioReady, { once: true });
+      audioRef.current.addEventListener('error', (e) => {
+        console.error('❌ [Audio Error] Event:', e.target.error?.message || 'unknown');
+        setError('Audio load error: Network or format issue');
+      });
       
       // Set source and load
       audioRef.current.src = url;
-      console.log('🎵 Loading audio from:', url);
+      console.log('🎵 [Audio Setup] src set, calling load()');
       
       // Try to load the audio
       try {
         audioRef.current.load();
+        console.log('🎵 [Audio Setup] load() called successfully');
       } catch(e) {
-        console.error('❌ Error calling load():', e);
+        console.error('❌ [Audio Setup] Error calling load():', e);
       }
       
-      // Also try immediate play in case it's already loaded (shouldn't happen but just in case)
+      // Fallback: try immediate play after short delay in case it's already buffered
       setTimeout(() => {
-        if (audioRef.current && audioRef.current.readyState >= 2 && !audioRef.current.playing) {
-          console.log('🎵 Audio ready via setTimeout check');
+        if (audioRef.current && audioRef.current.readyState >= 2) {
+          console.log('🎵 [Audio Fallback] readyState >= 2, triggering play via setTimeout');
           handleAudioReady();
+        } else {
+          console.log('🎵 [Audio Fallback] readyState:', audioRef.current?.readyState, '(waiting for events)');
         }
-      }, 100);
+      }, 500);
     }
     
     return url;
