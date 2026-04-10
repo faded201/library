@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xavier OS - Audiobook Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        .player-container {
+            width: 90%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Book Title Animation */
+        .title-container {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            min-height: 100px;
+        }
+
+        .book-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #e94560, #ff6b6b, #feca57, #48dbfb, #e94560);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite, titleFadeIn 2s ease-out;
+            opacity: 0;
+            text-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+        }
+
+        .book-title.visible {
+            opacity: 1;
+        }
+
+        .book-title.hiding {
+            animation: titleFadeOut 1s ease-in forwards;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes titleFadeIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+                filter: blur(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes titleFadeOut {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                filter: blur(0);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.2);
+                filter: blur(20px);
+            }
+        }
+
+        /* Chapter Info */
+        .chapter-info {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 20px 0;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s linear;
+            position: relative;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.6);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .control-btn.play-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+        }
+
+        .control-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        .play-btn svg {
+            width: 30px;
+            height: 30px;
+        }
+
+        /* Time Display */
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+
+        /* Volume Control */
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .volume-slider {
+            width: 150px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #e94560;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Status Indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9em;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .status-dot.loading {
+            background: #ff9800;
+        }
+
+        .status-dot.error {
+            background: #f44336;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Image Display */
+        .image-container {
+            width: 100%;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            margin-top: 20px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .scene-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: opacity 0.5s ease;
+        }
+
+        .image-container.transitioning .scene-image {
+            opacity: 0;
+        }
+
+        /* Emotion Badge */
+        .emotion-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: rgba(233, 69, 96, 0.3);
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 10px;
+            border: 1px solid rgba(233, 69, 96, 0.5);
+        }
+
+        /* Book Select */
+        .book-select-container {
+            margin-bottom: 20px;
+        }
+
+        .book-select {
+            width: 100%;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .book-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <!-- Book Selection -->
+        <div class="book-select-container">
+            <select class="book-select" id="bookSelect">
+                <option value="my-vampire-system">My Vampire System</option>
+                <option value="shadow-monarch">Shadow Monarch</option>
+                <option value="my-dragonic-system">My Dragonic System</option>
+                <option value="birth-demonic-sword">Birth of a Demonic Sword</option>
+                <option value="legendary-beast-tamer">Legendary Beast Tamer</option>
+            </select>
+        </div>
+
+        <!-- Title Animation Area -->
+        <div class="title-container">
+            <h1 class="book-title" id="bookTitle">Select a Book</h1>
+        </div>
+
+        <!-- Chapter Info -->
+        <div class="chapter-info" id="chapterInfo">Chapter 1 - The Beginning</div>
+
+        <!-- Image Display -->
+        <div class="image-container" id="imageContainer">
+            <img class="scene-image" id="sceneImage" src="" alt="Scene" style="display: none;">
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- Time Display -->
+        <div class="time-display">
+            <span id="currentTime">0:00</span>
+            <span id="totalTime">0:00</span>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button class="control-btn" id="prevBtn">
+                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button class="control-btn play-btn" id="playBtn">
+                <svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="control-btn" id="nextBtn">
+                <svg viewBox="0 0 24 24"><path d="M6 19l11-7L6 5v14zM18 6h2v12h-2z"/></svg>
+            </button>
+        </div>
+
+        <!-- Volume -->
+        <div class="volume-container">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+            </svg>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+        </div>
+
+        <!-- Status -->
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Ready</span>
+            <span class="emotion-badge" id="emotionBadge" style="display: none;"></span>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // XAVIER OS AUDIOBOOK PLAYER
+        // With Coisy Voice Integration & Fade Effects
+        // ============================================
+
+        class AudiobookPlayer {
+            constructor() {
+                // Audio elements
+                this.audio = new Audio();
+                this.audioContext = null;
+                this.source = null;
+                this.gainNode = null;
+
+                // State
+                this.isPlaying = false;
+                this.currentBook = 'my-vampire-system';
+                this.currentChapter = 1;
+                this.currentSegment = 0;
+                this.segments = [];
+                this.volume = 0.8;
+
+                // Coisy voice endpoint
+                this.cosyVoiceUrl = 'http://localhost:3005/api/tts';
+                this.imageBridgeUrl = 'http://localhost:3004/api/images';
+
+                // Bind elements
+                this.bindElements();
+
+                // Initialize
+                this.init();
+            }
+
+            bindElements() {
+                this.bookTitle = document.getElementById('bookTitle');
+                this.chapterInfo = document.getElementById('chapterInfo');
+                this.progressBar = document.getElementById('progressBar');
+                this.progressContainer = document.getElementById('progressContainer');
+                this.currentTimeEl = document.getElementById('currentTime');
+                this.totalTimeEl = document.getElementById('totalTime');
+                this.playBtn = document.getElementById('playBtn');
+                this.prevBtn = document.getElementById('prevBtn');
+                this.nextBtn = document.getElementById('nextBtn');
+                this.volumeSlider = document.getElementById('volumeSlider');
+                this.statusDot = document.getElementById('statusDot');
+                this.statusText = document.getElementById('statusText');
+                this.emotionBadge = document.getElementById('emotionBadge');
+                this.sceneImage = document.getElementById('sceneImage');
+                this.imageContainer = document.getElementById('imageContainer');
+                this.bookSelect = document.getElementById('bookSelect');
+
+                // Bind events
+                this.playBtn.addEventListener('click', () => this.togglePlay());
+                this.prevBtn.addEventListener('click', () => this.playPrevious());
+                this.nextBtn.addEventListener('click', () => this.playNext());
+                this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+                this.bookSelect.addEventListener('change', (e) => this.loadBook(e.target.value));
+                this.progressContainer.addEventListener('click', (e) => this.seek(e));
+
+                // Audio events
+                this.audio.addEventListener('timeupdate', () => this.updateProgress());
+                this.audio.addEventListener('ended', () => this.onAudioEnd());
+                this.audio.addEventListener('canplay', () => this.onAudioReady());
+            }
+
+            async init() {
+                this.setStatus('ready');
+                this.showTitle(this.currentBook);
+            }
+
+            // ============================================
+            // TITLE ANIMATION WITH FADE IN/OUT
+            // ============================================
+            showTitle(title, duration = 2000) {
+                const displayTitle = this.formatBookTitle(title);
+                this.bookTitle.textContent = displayTitle;
+                this.bookTitle.classList.remove('hiding');
+                this.bookTitle.classList.add('visible');
+
+                // Fade out after duration
+                setTimeout(() => {
+                    this.bookTitle.classList.add('hiding');
+                    this.bookTitle.classList.remove('visible');
+                }, duration);
+            }
+
+            // ============================================
+            // AUDIO PLAYBACK WITH FADE EFFECTS
+            // ============================================
+            async togglePlay() {
+                if (this.isPlaying) {
+                    await this.fadeOut();
+                    this.pause();
+                } else {
+                    if (this.segments.length === 0) {
+                        await this.loadSegments();
+                    }
+                    await this.playCurrentSegment();
+                }
+            }
+
+            async playCurrentSegment() {
+                const segment = this.segments[this.currentSegment];
+                if (!segment) return;
+
+                // Show emotion
+                this.showEmotion(segment.emotion || 'neutral');
+
+                // Load and play audio with fade in
+                this.audio.src = segment.audioUrl;
+                this.audio.load();
+
+                // Generate image for this segment
+                if (segment.imagePrompt) {
+                    this.loadImage(segment.imagePrompt);
+                }
+
+                this.updateChapterInfo();
+            }
+
+            async fadeOut(duration = 500) {
+                return new Promise((resolve) => {
+                    if (!this.gainNode) {
+                        resolve();
+                        return;
+                    }
+                    const startTime = Date.now();
+                    const startVolume = this.gainNode.gain.value;
+
+                    const fade = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        this.gainNode.gain.value = startVolume * (1 - easeOut);
+
+                        if (progress < 1) {
+                            requestAnimationFrame(fade);
+                        } else {
+                            this.audio.pause();
+                            this.isPlaying = false;
+                            this.updatePlayButton();
+                            resolve();
+                        }
+                    };
+                    fade();
+                });
+            }
+
+            async fadeIn(duration = 500) {
+                return new Promise((resolve) => {
+                    if (!this.gainNode) {
+                        resolve();
+                        return;
+                    }
+                    const startTime = Date.now();
+                    const targetVolume = this.volume;
+
+                    const fade = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const easeIn = Math.pow(progress, 3);
+                        this.gainNode.gain.value = targetVolume * easeIn;
+
+                        if (progress < 1) {
+                            requestAnimationFrame(fade);
+                        } else {
+                            resolve();
+                        }
+                    };
+                    fade();
+                });
+            }
+
+            pause() {
+                this.isPlaying = false;
+                this.updatePlayButton();
+                this.setStatus('paused');
+            }
+
+            async play() {
+                try {
+                    await this.audio.play();
+                    this.isPlaying = true;
+                    this.updatePlayButton();
+                    this.setStatus('playing');
+                } catch (error) {
+                    console.error('Play error:', error);
+                    this.setStatus('error');
+                }
+            }
+
+            // ============================================
+            // COISY VOICE INTEGRATION
+            // ============================================
+            async loadSegments() {
+                this.setStatus('loading');
+                const text = await this.getStoryText();
+
+                // Split into chunks with emotion detection
+                this.segments = this.splitIntoSegments(text);
+
+                // Generate audio using Coisy voice
+                for (let i = 0; i < this.segments.length; i++) {
+                    const segment = this.segments[i];
+                    segment.audioUrl = await this.generateCoisyAudio(segment.text, segment.emotion);
+                    segment.imagePrompt = this.generateImagePrompt(segment);
+                }
+
+                this.setStatus('ready');
+            }
+
+            async generateCoisyAudio(text, emotion = 'neutral') {
+                try {
+                    const response = await fetch(`${this.cosyVoiceUrl}?text=${encodeURIComponent(text)}&emotion=${emotion}`, {
+                        method: 'GET'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Coisy voice failed');
+                    }
+
+                    const audioBlob = await response.blob();
+                    return URL.createObjectURL(audioBlob);
+                } catch (error) {
+                    console.error('Coisy audio error:', error);
+                    this.setStatus('error');
+                    return null;
+                }
+            }
+
+            async loadImage(imagePrompt) {
+                try {
+                    const response = await fetch(`${this.imageBridgeUrl}?prompt=${encodeURIComponent(imagePrompt)}&count=1`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.images && data.images.length > 0) {
+                            this.sceneImage.src = data.images[0].dataUri;
+                            this.sceneImage.style.display = 'block';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Image load error:', error);
+                }
+            }
+
+            // ============================================
+            // SEGMENT PROCESSING
+            // ============================================
+            splitIntoSegments(text) {
+                // Split text into natural speaking segments
+                const sentences = text.split(/(?<=[.!?])\s+/);
+                const segments = [];
+
+                sentences.forEach((sentence, index) => {
+                    const emotion = this.detectEmotion(sentence);
+                    segments.push({
+                        index,
+                        text: sentence.trim(),
+                        emotion,
+                        audioUrl: null,
+                        imagePrompt: null
+                    });
+                });
+
+                return segments;
+            }
+
+            detectEmotion(text) {
+                const lower = text.toLowerCase();
+                if (lower.includes('happy') || lower.includes('joy') || lower.includes('smile')) return 'happy';
+                if (lower.includes('sad') || lower.includes('tear') || lower.includes('cry')) return 'sad';
+                if (lower.includes('angr') || lower.includes('furi') || lower.includes('hate')) return 'angry';
+                if (lower.includes('fear') || lower.includes('scared') || lower.includes('terror')) return 'fearful';
+                if (lower.includes('surpris') || lower.includes('shock') || lower.includes('amaz')) return 'surprise';
+                return 'neutral';
+            }
+
+            generateImagePrompt(segment) {
+                return `${this.currentBook} scene: ${segment.text.substring(0, 100)}... ${segment.emotion} mood`;
+            }
+
+            // ============================================
+            // UTILITIES
+            // ============================================
+            formatBookTitle(id) {
+                return id.split('-').map(word =>
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+            }
+
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            setStatus(status) {
+                this.statusDot.className = 'status-dot';
+                if (status === 'loading') this.statusDot.classList.add('loading');
+                if (status === 'error') this.statusDot.classList.add('error');
+
+                const statusTexts = {
+                    ready: 'Ready to play',
+                    playing: 'Now Playing',
+                    paused: 'Paused',
+                    loading: 'Loading...',
+                    error: 'Error occurred'
+                };
+                this.statusText.textContent = statusTexts[status] || status;
+            }
+
+            showEmotion(emotion) {
+                this.emotionBadge.textContent = emotion;
+                this.emotionBadge.style.display = 'inline-block';
+            }
+
+            updatePlayButton() {
+                const icon = this.playBtn.querySelector('svg');
+                if (this.isPlaying) {
+                    icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+                } else {
+                    icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+                }
+            }
+
+            updateProgress() {
+                const percent = (this.audio.currentTime / this.audio.duration) * 100;
+                this.progressBar.style.width = `${percent}%`;
+                this.currentTimeEl.textContent = this.formatTime(this.audio.currentTime);
+                this.totalTimeEl.textContent = this.formatTime(this.audio.duration);
+            }
+
+            seek(event) {
+                const rect = this.progressContainer.getBoundingClientRect();
+                const percent = (event.clientX - rect.left) / rect.width;
+                this.audio.currentTime = percent * this.audio.duration;
+            }
+
+            setVolume(value) {
+                this.volume = value / 100;
+                if (this.gainNode) {
+                    this.gainNode.gain.value = this.volume;
+                }
+            }
+
+            loadBook(bookId) {
+                this.currentBook = bookId;
+                this.showTitle(bookId);
+                this.currentSegment = 0;
+                this.segments = [];
+                this.setStatus('ready');
+            }
+
+            playPrevious() {
+                if (this.currentSegment > 0) {
+                    this.currentSegment--;
+                    this.playCurrentSegment();
+                }
+            }
+
+            playNext() {
+                if (this.currentSegment < this.segments.length - 1) {
+                    this.currentSegment++;
+                    this.playCurrentSegment();
+                }
+            }
+
+            onAudioEnd() {
+                this.playNext();
+            }
+
+            onAudioReady() {
+                this.fadeIn().then(() => this.play());
+            }
+
+            updateChapterInfo() {
+                this.chapterInfo.textContent = `Chapter ${this.currentChapter} - Segment ${this.currentSegment + 1}`;
+            }
+
+            async getStoryText() {
+                // Placeholder story text - replace with actual story from bible
+                const stories = {
+                    'my-vampire-system': "Quinn Talen's eyes snapped open. He could feel it—the power coursing through his veins. The System had chosen him. While others gained peaceful abilities, Quinn gained a predator's instinct. His hunger was different now. Every drop of blood would make him stronger.",
+                    'shadow-monarch': "When the gates erupted from the earth, humanity nearly fell. Sung Jin-Woo was the weakest hunter. But shadows whispered his name. Arise. A great power sleeps within. The shadows belong to him now.",
+                    'my-dragonic-system': "The dragon blood in Aeron's veins screamed to be released. With each seal he broke, his human form became more monstrous. Scales erupted across his arms. The Dragon Realm couldn't ignore him anymore.",
+                    'default': "The journey begins. Power awakens. Destiny calls. The hero rises to face their fate."
+                };
+                return stories[this.currentBook] || stories.default;
+            }
+        }
+
+        // Initialize player when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.player = new AudiobookPlayer();
+        });
+    </script>
+</body>
+</html> 
